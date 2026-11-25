@@ -1,0 +1,1078 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TejamAI — Покупайте умнее. Экономьте больше.</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet" />
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <style>
+    :root {
+      --bg-primary: #030508; --bg-secondary: #080C12; --bg-card: #0D131D; --bg-elevated: #131C2B;
+      --emerald-primary: #00F0B5; --emerald-secondary: #00C493; --cyan-accent: #38BDF8;
+      --indigo-accent: #818CF8; --violet-accent: #A78BFA; --pink-accent: #F472B6; --amber-accent: #FBBF24;
+      --text-main: #F8FAFC; --text-secondary: #94A3B8; --text-muted: #64748B;
+      --border-color: rgba(255, 255, 255, 0.08); --border-emerald: rgba(0, 240, 181, 0.42);
+      --danger: #EF4444; --warning: #F59E0B;
+      --radius-sm: 10px; --radius-md: 16px; --radius-lg: 24px; --radius-xl: 32px;
+      --shadow-card: 0 24px 60px rgba(0, 0, 0, 0.65), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+      --shadow-glow: 0 0 55px rgba(0, 240, 181, 0.18);
+      --transition: all 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+      --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      --font-display: 'Plus Jakarta Sans', 'Inter', sans-serif;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body {
+      background-color: var(--bg-primary); color: var(--text-main);
+      font-family: var(--font-sans); line-height: 1.6; overflow-x: hidden;
+      min-height: 100vh; display: flex; flex-direction: column;
+      background-image:
+        linear-gradient(rgba(255,255,255,0.024) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.024) 1px, transparent 1px),
+        radial-gradient(ellipse 80% 50% at 50% -10%, rgba(0,240,181,0.16), transparent),
+        radial-gradient(circle at 85% 22%, rgba(56,189,248,0.11), transparent 45%),
+        radial-gradient(circle at 12% 65%, rgba(129,140,248,0.08), transparent 45%);
+      background-size: 56px 56px, 56px 56px, 100% 100%, 100% 100%, 100% 100%;
+    }
+    a { color: inherit; text-decoration: none; }
+    button, input, select, textarea { font-family: inherit; color: inherit; }
+    button { cursor: pointer; border: none; background: none; }
+    img { max-width: 100%; display: block; }
+    .container { width: 100%; max-width: 1280px; margin: 0 auto; padding: 0 22px; }
+
+    .glass-card {
+      position: relative;
+      background: linear-gradient(160deg, rgba(17,25,38,0.88) 0%, rgba(8,12,20,0.95) 100%);
+      backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px);
+      border: 1px solid rgba(255,255,255,0.09); border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-card);
+      transition: transform 0.35s cubic-bezier(0.22,1,0.36,1), border-color 0.35s ease, box-shadow 0.35s ease;
+      overflow: hidden;
+    }
+    .glass-card::before {
+      content: ""; position: absolute; inset: 0; border-radius: inherit; padding: 1px;
+      background: radial-gradient(420px circle at var(--mouse-x,50%) var(--mouse-y,0%),
+        rgba(0,240,181,0.45), rgba(56,189,248,0.15) 40%, transparent 70%);
+      -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+      -webkit-mask-composite: xor; mask-composite: exclude;
+      pointer-events: none; opacity: 0; transition: opacity 0.35s ease;
+    }
+    .glass-card:hover::before { opacity: 1; }
+    .glass-card:hover {
+      transform: translateY(-4px); border-color: rgba(0,240,181,0.36);
+      box-shadow: 0 30px 70px rgba(0,0,0,0.78), 0 0 42px rgba(0,240,181,0.14), inset 0 1px 0 rgba(255,255,255,0.14);
+    }
+
+    .btn {
+      display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+      padding: 12px 22px; border-radius: var(--radius-md);
+      font-weight: 600; font-size: 0.95rem; transition: var(--transition); white-space: nowrap;
+    }
+    .btn-primary {
+      background: linear-gradient(120deg, #00F0B5, #00C896, #38BDF8, #00F0B5);
+      background-size: 240% 240%; animation: borderGlowSweep 6s ease infinite;
+      color: #03110D; font-weight: 700; box-shadow: 0 8px 26px rgba(0,240,181,0.34);
+    }
+    .btn-primary:hover { transform: translateY(-2px) scale(1.02); box-shadow: 0 14px 34px rgba(0,240,181,0.5); }
+    .btn-secondary { background: rgba(255,255,255,0.05); border: 1px solid var(--border-color); color: var(--text-main); }
+    .btn-secondary:hover { background: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.22); }
+    .btn-outline-emerald { background: rgba(0,240,181,0.09); border: 1px solid var(--border-emerald); color: var(--emerald-primary); }
+    .btn-outline-emerald:hover { background: rgba(0,240,181,0.18); }
+    .btn-sm { padding: 8px 14px; font-size: 0.84rem; border-radius: 10px; }
+    .btn-icon {
+      width: 38px; height: 38px; padding: 0; border-radius: 10px;
+      background: rgba(255,255,255,0.05); border: 1px solid var(--border-color);
+      display: inline-flex; align-items: center; justify-content: center; transition: var(--transition);
+    }
+    .btn-icon:hover { border-color: var(--emerald-primary); color: var(--emerald-primary); background: rgba(0,240,181,0.12); }
+
+    .badge {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 5px 12px; border-radius: 999px; font-size: 0.78rem; font-weight: 600;
+    }
+    .badge-emerald { background: rgba(0,240,181,0.13); color: var(--emerald-primary); border: 1px solid rgba(0,240,181,0.34); }
+    .badge-cyan { background: rgba(56,189,248,0.13); color: var(--cyan-accent); border: 1px solid rgba(56,189,248,0.32); }
+    .badge-warning { background: rgba(245,158,11,0.14); color: var(--warning); border: 1px solid rgba(245,158,11,0.3); }
+    .badge-violet { background: rgba(167,139,250,0.13); color: var(--violet-accent); border: 1px solid rgba(167,139,250,0.32); }
+    .badge-pink { background: rgba(244,114,182,0.13); color: var(--pink-accent); border: 1px solid rgba(244,114,182,0.32); }
+
+    .section-header { text-align: center; max-width: 740px; margin: 0 auto 48px; }
+    .section-title {
+      font-family: var(--font-display); font-size: clamp(1.85rem, 3.2vw, 2.65rem);
+      font-weight: 800; letter-spacing: -0.025em; margin-bottom: 12px; line-height: 1.18;
+    }
+    .section-subtitle { color: var(--text-secondary); font-size: 1.05rem; }
+    .gradient-text { background: linear-gradient(125deg, #00F0B5 0%, #38BDF8 55%, #818CF8 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    .gradient-text-pink { background: linear-gradient(125deg, #F472B6 0%, #A78BFA 55%, #38BDF8 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    .navbar { position: sticky; top: 0; z-index: 1000; background: rgba(3,5,8,0.82); backdrop-filter: blur(20px); border-bottom: 1px solid var(--border-color); }
+    .navbar-inner { display: flex; align-items: center; justify-content: space-between; gap: 20px; padding: 14px 0; }
+    .brand-logo { display: flex; align-items: center; gap: 10px; font-family: var(--font-display); font-weight: 800; font-size: 1.3rem; }
+    .brand-logo-icon { width: 42px; height: 42px; border-radius: 12px; background: linear-gradient(135deg, rgba(0,240,181,0.15), rgba(56,189,248,0.1)); border: 1px solid rgba(0,240,181,0.3); display: flex; align-items: center; justify-content: center; }
+    .brand-logo-text span { color: var(--emerald-primary); }
+    .nav-links { display: flex; gap: 4px; }
+    .nav-link { padding: 8px 14px; border-radius: 10px; font-size: 0.9rem; font-weight: 500; color: var(--text-secondary); transition: var(--transition); }
+    .nav-link:hover, .nav-link.active { color: var(--text-main); background: rgba(255,255,255,0.06); }
+    .nav-link.active { color: var(--emerald-primary); }
+    .nav-actions { display: flex; align-items: center; gap: 10px; }
+    .currency-select { background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: 10px; padding: 8px 10px; font-size: 0.84rem; color: var(--text-main); }
+    .lang-switcher { display: inline-flex; background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: 10px; padding: 3px; }
+    .lang-btn { padding: 5px 10px; border-radius: 7px; font-size: 0.8rem; font-weight: 600; color: var(--text-secondary); }
+    .lang-btn.active { background: var(--emerald-primary); color: #03110D; }
+    .nav-badge-wrap { position: relative; }
+    .count-badge { position: absolute; top: -6px; right: -6px; background: var(--emerald-primary); color: #03110D; font-size: 0.68rem; font-weight: 800; padding: 1px 6px; border-radius: 999px; min-width: 18px; text-align: center; }
+    .mobile-toggle { display: none; }
+    .mobile-menu { display: none; flex-direction: column; gap: 4px; padding: 12px 22px 18px; border-top: 1px solid var(--border-color); }
+    .mobile-menu.open { display: flex; }
+    .marquee-strip { position: relative; overflow: hidden; border-top: 1px solid var(--border-color); border-bottom: 1px solid var(--border-color); background: rgba(8,12,18,0.72); backdrop-filter: blur(12px); padding: 13px 0; margin: 12px 0 38px; mask-image: linear-gradient(90deg, transparent, #000 10%, #000 90%, transparent); -webkit-mask-image: linear-gradient(90deg, transparent, #000 10%, #000 90%, transparent); }
+    .marquee-track { display: flex; gap: 28px; width: max-content; animation: marqueeScroll 40s linear infinite; }
+    .marquee-strip:hover .marquee-track { animation-play-state: paused; }
+    .marquee-pill { display: inline-flex; align-items: center; gap: 8px; padding: 6px 14px; border-radius: 999px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.07); font-size: 0.82rem; font-weight: 600; color: var(--text-secondary); white-space: nowrap; }
+    .marquee-pill strong { color: var(--emerald-primary); }
+    @keyframes marqueeScroll { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
+    @keyframes fadeSlideIn { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes floatSlow { 0%,100% { transform: translateY(0px); } 50% { transform: translateY(-9px); } }
+    @keyframes pulseDot { 0%,100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.45; transform: scale(1.3); } }
+    @keyframes auroraFloat { 0%,100% { transform: translate3d(0,0,0) scale(1); } 33% { transform: translate3d(38px,-28px,0) scale(1.07); } 66% { transform: translate3d(-28px,22px,0) scale(0.95); } }
+    @keyframes borderGlowSweep { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
+    @keyframes cardPopIn { from { opacity: 0; transform: translateY(18px) scale(0.98); } to { opacity: 1; transform: translateY(0) scale(1); } }
+    @keyframes videoPulse { 0%,100% { box-shadow: 0 0 0 0 rgba(0,240,181,0.4); } 50% { box-shadow: 0 0 0 12px rgba(0,240,181,0); } }
+
+    .pulse-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--emerald-primary); display: inline-block; animation: pulseDot 1.8s infinite; }
+    .ambient-aurora { position: fixed; inset: 0; pointer-events: none; z-index: -1; overflow: hidden; }
+    .aurora-orb { position: absolute; border-radius: 50%; filter: blur(105px); opacity: 0.46; animation: auroraFloat 15s ease-in-out infinite; }
+    .aurora-orb-1 { width: 540px; height: 540px; background: radial-gradient(circle, rgba(0,240,181,0.36), transparent 70%); top: -130px; left: -90px; }
+    .aurora-orb-2 { width: 500px; height: 500px; background: radial-gradient(circle, rgba(56,189,248,0.32), transparent 70%); top: 20%; right: -120px; animation-delay: -5s; }
+    .aurora-orb-3 { width: 480px; height: 480px; background: radial-gradient(circle, rgba(129,140,248,0.26), transparent 70%); bottom: -110px; left: 28%; animation-delay: -9s; }
+
+    main { flex: 1; }
+    .view-section { display: none; padding: 28px 0 84px; animation: fadeSlideIn 0.38s cubic-bezier(0.22,1,0.36,1); }
+    .view-section.active { display: block; }
+    .hero { padding: 36px 0 64px; display: grid; grid-template-columns: 1.08fr 0.92fr; gap: 48px; align-items: center; }
+    .hero-title { font-family: var(--font-display); font-size: clamp(2.25rem, 4.4vw, 3.65rem); font-weight: 800; line-height: 1.12; letter-spacing: -0.03em; margin: 18px 0 20px; }
+    .hero-desc { font-size: 1.1rem; color: var(--text-secondary); max-width: 560px; margin-bottom: 30px; }
+    .hero-cta { display: flex; flex-wrap: wrap; gap: 14px; margin-bottom: 36px; }
+    .trust-row { display: flex; flex-wrap: wrap; gap: 22px; padding-top: 22px; border-top: 1px solid var(--border-color); }
+    .trust-item { display: flex; align-items: center; gap: 8px; font-size: 0.9rem; font-weight: 500; color: var(--text-secondary); }
+    .trust-item i { color: var(--emerald-primary); }
+    .hero-visual { position: relative; }
+    .hero-card { padding: 24px; background: linear-gradient(160deg, rgba(24,37,48,0.92) 0%, rgba(13,21,29,0.96) 100%); border: 1px solid rgba(0,214,160,0.28); box-shadow: var(--shadow-glow), var(--shadow-card); position: relative; }
+    .hero-card-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 18px; }
+    .hero-product-box { display: flex; gap: 18px; align-items: center; background: rgba(8,13,18,0.65); padding: 16px; border-radius: var(--radius-md); border: 1px solid var(--border-color); margin-bottom: 16px; }
+    .hero-product-img { width: 96px; height: 96px; border-radius: 12px; object-fit: cover; background: #1a2634; flex-shrink: 0; }
+    .hero-store-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 16px; }
+    .hero-store-row { display: flex; align-items: center; justify-content: space-between; padding: 10px 14px; border-radius: 10px; background: rgba(255,255,255,0.03); border: 1px solid var(--border-color); font-size: 0.88rem; }
+    .hero-store-row.best { background: rgba(0,214,160,0.09); border-color: rgba(0,214,160,0.35); }
+    .floating-pill { position: absolute; padding: 10px 14px; border-radius: 14px; background: rgba(18,29,39,0.94); backdrop-filter: blur(12px); border: 1px solid rgba(0,214,160,0.38); box-shadow: 0 10px 25px rgba(0,0,0,0.5); font-size: 0.8rem; font-weight: 600; display: flex; align-items: center; gap: 8px; animation: floatSlow 4s ease-in-out infinite; }
+    .pill-top-right { top: -16px; right: -12px; }
+    .pill-bottom-left { bottom: -16px; left: -14px; animation-delay: 1.5s; }
+    .ai-search-box { padding: 28px; margin: 24px 0 72px; border: 1px solid rgba(0,214,160,0.25); box-shadow: var(--shadow-glow); }
+    .search-tabs { display: inline-flex; background: var(--bg-secondary); padding: 5px; border-radius: 12px; border: 1px solid var(--border-color); margin-bottom: 20px; }
+    .search-tab { padding: 9px 18px; border-radius: 9px; font-weight: 600; font-size: 0.9rem; color: var(--text-secondary); display: flex; align-items: center; gap: 8px; transition: var(--transition); }
+    .search-tab.active { background: var(--emerald-primary); color: #051310; }
+    .search-bar-wrap { display: flex; gap: 12px; position: relative; }
+    .search-input-main { flex: 1; background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 15px 44px 15px 18px; font-size: 1rem; color: var(--text-main); }
+    .search-input-main:focus { outline: none; border-color: var(--emerald-primary); box-shadow: 0 0 0 3px rgba(0,240,181,0.16); }
+    .search-clear-btn { position: absolute; right: 155px; top: 50%; transform: translateY(-50%); color: var(--text-muted); padding: 6px; }
+    .chip-row { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; align-items: center; }
+    .query-chip { padding: 6px 13px; border-radius: 999px; background: rgba(255,255,255,0.04); border: 1px solid var(--border-color); font-size: 0.81rem; color: var(--text-secondary); transition: var(--transition); }
+    .query-chip:hover { border-color: var(--emerald-primary); color: var(--emerald-primary); background: rgba(0,240,181,0.1); transform: translateY(-1px); }
+    .category-hub-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(175px, 1fr)); gap: 14px; margin: 24px 0 36px; }
+    .category-hub-card { padding: 18px 14px; text-align: center; cursor: pointer; border: 1px solid var(--border-color); background: rgba(18,29,39,0.85); border-radius: var(--radius-md); transition: var(--transition); display: flex; flex-direction: column; align-items: center; gap: 8px; }
+    .category-hub-card:hover, .category-hub-card.active { border-color: var(--emerald-primary); background: rgba(0,214,160,0.1); transform: translateY(-3px); box-shadow: 0 8px 24px rgba(0,214,160,0.16); }
+    .category-hub-icon { width: 44px; height: 44px; border-radius: 12px; background: rgba(0,214,160,0.14); color: var(--emerald-primary); display: flex; align-items: center; justify-content: center; }
+
+    .products-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(265px, 1fr)); gap: 20px; }
+    .product-card { display: flex; flex-direction: column; overflow: hidden; position: relative; animation: cardPopIn 0.45s cubic-bezier(0.22,1,0.36,1) both; }
+    .product-thumb-wrap { position: relative; height: 210px; background: #0D1620; overflow: hidden; }
+    .product-thumb { width: 100%; height: 100%; object-fit: cover; transition: transform 0.45s ease; }
+    .product-card:hover .product-thumb { transform: scale(1.06); }
+    .discount-tag { position: absolute; top: 12px; left: 12px; background: linear-gradient(135deg, #EF4444, #F59E0B); color: #fff; font-weight: 800; font-size: 0.76rem; padding: 4px 9px; border-radius: 8px; box-shadow: 0 4px 12px rgba(239,68,68,0.4); }
+    .card-top-actions { position: absolute; top: 12px; right: 12px; display: flex; flex-direction: column; gap: 6px; }
+    .product-body { padding: 18px; display: flex; flex-direction: column; flex: 1; }
+    .product-brand { font-size: 0.76rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--emerald-primary); font-weight: 700; }
+    .product-title { font-size: 1.02rem; font-weight: 700; margin: 4px 0 8px; line-height: 1.35; }
+    .product-meta { display: flex; align-items: center; justify-content: space-between; font-size: 0.82rem; color: var(--text-secondary); margin-bottom: 12px; }
+    .price-block { margin-top: auto; padding-top: 12px; border-top: 1px solid var(--border-color); }
+    .old-price { font-size: 0.82rem; color: var(--text-muted); text-decoration: line-through; }
+    .current-price { font-family: var(--font-display); font-size: 1.18rem; font-weight: 800; color: var(--text-main); }
+    .card-footer-btns { display: grid; grid-template-columns: 1fr auto; gap: 8px; margin-top: 14px; }
+    .store-badge { display: inline-flex; align-items: center; gap: 4px; font-size: 0.74rem; padding: 3px 8px; border-radius: 6px; background: rgba(255,255,255,0.06); color: var(--text-secondary); }
+    .results-layout { display: grid; grid-template-columns: 280px 1fr; gap: 28px; align-items: start; }
+    .filters-sidebar { padding: 22px; position: sticky; top: 92px; }
+    .filter-block { margin-bottom: 20px; padding-bottom: 16px; border-bottom: 1px solid var(--border-color); }
+    .filter-block:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
+    .filter-title { font-size: 0.9rem; font-weight: 700; margin-bottom: 10px; color: var(--text-main); }
+    .price-inputs { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .checkbox-label { display: flex; align-items: center; gap: 8px; font-size: 0.88rem; color: var(--text-secondary); margin-bottom: 7px; cursor: pointer; }
+
+    .form-group { margin-bottom: 16px; }
+    .form-label { display: block; font-size: 0.88rem; font-weight: 500; color: var(--text-secondary); margin-bottom: 6px; }
+    .form-input, .form-select, .form-textarea { width: 100%; background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 11px 14px; color: var(--text-main); font-size: 0.95rem; transition: var(--transition); }
+    .form-input:focus, .form-select:focus, .form-textarea:focus { outline: none; border-color: var(--emerald-primary); box-shadow: 0 0 0 3px rgba(0,240,181,0.16); }
+    .steps-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; margin-bottom: 80px; }
+    .step-card { padding: 28px; position: relative; }
+    .step-number { width: 42px; height: 42px; border-radius: 12px; background: rgba(0,214,160,0.14); border: 1px solid rgba(0,214,160,0.35); color: var(--emerald-primary); font-family: var(--font-display); font-weight: 800; display: flex; align-items: center; justify-content: center; margin-bottom: 18px; }
+    .features-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; margin-bottom: 80px; }
+    .feature-card { padding: 24px; }
+    .feature-icon { width: 46px; height: 46px; border-radius: 12px; background: linear-gradient(135deg, rgba(0,214,160,0.16), rgba(56,189,248,0.12)); color: var(--emerald-primary); display: flex; align-items: center; justify-content: center; margin-bottom: 16px; }
+
+    .video-showcase { padding: 28px; margin-bottom: 44px; border-color: rgba(0,240,181,0.38); box-shadow: 0 26px 65px rgba(0,0,0,0.68), 0 0 45px rgba(0,240,181,0.14); }
+    .video-grid { display: grid; grid-template-columns: 1.38fr 0.82fr; gap: 28px; align-items: center; }
+    .video-stage { position: relative; border-radius: 20px; overflow: hidden; background: #04070B; border: 1px solid rgba(0,240,181,0.42); aspect-ratio: 16/9; min-height: 310px; box-shadow: 0 16px 40px rgba(0,0,0,0.75); }
+    .video-stage iframe { width: 100%; height: 100%; border: none; }
+    .video-scene-btn { justify-content: flex-start; padding: 11px 14px; width: 100%; text-align: left; }
+    .video-scene-btn.active { background: rgba(0,240,181,0.18); border-color: var(--emerald-primary); color: var(--emerald-primary); }
+
+    .telegram-card { padding: 36px; display: grid; grid-template-columns: 1.1fr 0.9fr; gap: 32px; align-items: center; margin-bottom: 80px; background: linear-gradient(135deg, rgba(18,29,39,0.95), rgba(14,33,47,0.92)); border: 1px solid rgba(56,189,248,0.3); }
+    .tg-mockup { background: #0B141E; border: 1px solid var(--border-color); border-radius: var(--radius-lg); padding: 18px; }
+    .tg-msg { background: #152332; padding: 12px 14px; border-radius: 14px 14px 14px 4px; font-size: 0.88rem; margin-bottom: 10px; border-left: 3px solid var(--cyan-accent); }
+
+    .faq-list { max-width: 820px; margin: 0 auto; display: flex; flex-direction: column; gap: 12px; }
+    .faq-item { border: 1px solid var(--border-color); border-radius: var(--radius-md); background: var(--bg-card); overflow: hidden; }
+    .faq-question { width: 100%; padding: 18px 22px; display: flex; align-items: center; justify-content: space-between; text-align: left; font-weight: 600; font-size: 1rem; }
+    .faq-answer { max-height: 0; overflow: hidden; transition: max-height 0.3s ease; padding: 0 22px; color: var(--text-secondary); font-size: 0.94rem; }
+    .faq-item.open .faq-answer { max-height: 240px; padding-bottom: 18px; }
+
+    .chat-container { max-width: 920px; margin: 0 auto; display: flex; flex-direction: column; height: 640px; overflow: hidden; }
+    .chat-header { padding: 18px 24px; border-bottom: 1px solid var(--border-color); display: flex; align-items: center; justify-content: space-between; background: rgba(13,21,29,0.9); }
+    .chat-messages { flex: 1; overflow-y: auto; padding: 24px; display: flex; flex-direction: column; gap: 16px; }
+    .msg-bubble { max-width: 80%; padding: 14px 18px; border-radius: 18px; font-size: 0.95rem; line-height: 1.55; }
+    .msg-ai { align-self: flex-start; background: var(--bg-elevated); border: 1px solid var(--border-color); border-bottom-left-radius: 4px; }
+    .msg-user { align-self: flex-end; background: linear-gradient(135deg, var(--emerald-primary), var(--emerald-secondary)); color: #051310; font-weight: 500; border-bottom-right-radius: 4px; }
+    .chat-footer { padding: 16px 20px; border-top: 1px solid var(--border-color); background: rgba(13,21,29,0.9); }
+
+    .kpi-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 18px; margin-bottom: 28px; }
+    .kpi-card { padding: 22px; }
+    .kpi-value { font-family: var(--font-display); font-size: 1.65rem; font-weight: 800; margin: 8px 0 4px; }
+    .cart-layout { display: grid; grid-template-columns: 1.45fr 0.85fr; gap: 28px; align-items: start; }
+    .cart-item { display: flex; gap: 16px; align-items: center; padding: 16px; border-bottom: 1px solid var(--border-color); }
+    .qty-control { display: inline-flex; align-items: center; gap: 10px; background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: 10px; padding: 4px 10px; }
+    .auth-card { max-width: 440px; margin: 20px auto; padding: 34px; }
+    .product-detail-grid { display: grid; grid-template-columns: 1fr 1.15fr; gap: 32px; margin-bottom: 32px; }
+    .detail-gallery { padding: 24px; display: flex; align-items: center; justify-content: center; background: #0D1620; }
+    .detail-gallery img { border-radius: var(--radius-md); max-height: 380px; object-fit: cover; }
+    .specs-table { width: 100%; border-collapse: collapse; }
+    .specs-table td { padding: 10px 12px; border-bottom: 1px solid var(--border-color); font-size: 0.92rem; }
+    .specs-table td:first-child { color: var(--text-secondary); width: 42%; }
+    .compare-scroll { overflow-x: auto; }
+    .compare-table { width: 100%; min-width: 720px; border-collapse: collapse; }
+    .compare-table th, .compare-table td { padding: 16px; border: 1px solid var(--border-color); text-align: left; vertical-align: top; }
+    .compare-table th { background: var(--bg-secondary); color: var(--text-secondary); font-weight: 600; width: 190px; }
+    .highlight-col { background: rgba(0,214,160,0.05); }
+    .dropzone { border: 2px dashed rgba(0,214,160,0.35); border-radius: var(--radius-lg); padding: 36px 24px; text-align: center; background: rgba(13,21,29,0.65); transition: var(--transition); }
+    .dropzone.dragover { border-color: var(--emerald-primary); background: rgba(0,214,160,0.08); }
+    .toast-container { position: fixed; bottom: 24px; right: 24px; z-index: 9999; display: flex; flex-direction: column; gap: 10px; }
+    .toast { background: var(--bg-elevated); border: 1px solid var(--emerald-primary); color: var(--text-main); padding: 13px 18px; border-radius: 12px; box-shadow: 0 12px 30px rgba(0,0,0,0.55); display: flex; align-items: center; gap: 10px; font-size: 0.9rem; animation: fadeSlideIn 0.25s ease; }
+    footer { background: var(--bg-secondary); border-top: 1px solid var(--border-color); padding: 60px 0 30px; margin-top: auto; }
+    .footer-grid { display: grid; grid-template-columns: 1.5fr 1fr 1fr 1fr; gap: 36px; margin-bottom: 40px; }
+    .footer-col h4 { font-size: 0.95rem; font-weight: 700; margin-bottom: 16px; color: var(--text-main); }
+    .footer-links { display: flex; flex-direction: column; gap: 10px; font-size: 0.9rem; color: var(--text-secondary); }
+    .footer-links a:hover { color: var(--emerald-primary); }
+    .footer-bottom { padding-top: 24px; border-top: 1px solid var(--border-color); display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 16px; font-size: 0.85rem; color: var(--text-muted); }
+    .social-links { display: flex; gap: 10px; }
+    .social-link { width: 36px; height: 36px; border-radius: 10px; background: rgba(255,255,255,0.05); border: 1px solid var(--border-color); display: inline-flex; align-items: center; justify-content: center; transition: var(--transition); }
+    .social-link:hover { border-color: var(--emerald-primary); color: var(--emerald-primary); background: rgba(0,240,181,0.12); transform: translateY(-2px); }
+    .social-link.instagram:hover { border-color: #E4405F; color: #E4405F; background: rgba(228,64,95,0.12); }
+    .social-link.telegram:hover { border-color: #0088cc; color: #0088cc; background: rgba(0,136,204,0.12); }
+    .social-link.youtube:hover { border-color: #FF0000; color: #FF0000; background: rgba(255,0,0,0.12); }
+    .social-link.facebook:hover { border-color: #1877F2; color: #1877F2; background: rgba(24,119,242,0.12); }
+
+    .demo-banner { background: rgba(56,189,248,0.08); border: 1px solid rgba(56,189,248,0.24); border-radius: var(--radius-md); padding: 12px 16px; font-size: 0.86rem; color: #BAE6FD; display: flex; align-items: center; gap: 10px; margin-bottom: 20px; }
+    @media (max-width: 1100px) { .nav-links { display: none; } .mobile-toggle { display: inline-flex; } }
+    @media (max-width: 960px) {
+      .hero { grid-template-columns: 1fr; }
+      .pill-top-right, .pill-bottom-left { position: static; display: inline-flex; margin: 6px 6px 0 0; }
+      .steps-grid { grid-template-columns: 1fr; }
+      .features-grid { grid-template-columns: repeat(2, 1fr); }
+      .telegram-card { grid-template-columns: 1fr; }
+      .results-layout { grid-template-columns: 1fr; }
+      .filters-sidebar { position: static; }
+      .product-detail-grid, .cart-layout { grid-template-columns: 1fr; }
+      .kpi-grid { grid-template-columns: repeat(2, 1fr); }
+      .video-grid { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 560px) {
+      .features-grid { grid-template-columns: 1fr; }
+      .search-bar-wrap { flex-direction: column; }
+      .search-clear-btn { right: 14px; top: 26px; }
+      .footer-grid { grid-template-columns: 1fr; }
+      .kpi-grid { grid-template-columns: 1fr; }
+      .nav-actions .currency-select, .nav-actions .lang-switcher { display: none; }
+    }
+  </style>
+</head>
+<body>
+  <div class="ambient-aurora" aria-hidden="true">
+    <div class="aurora-orb aurora-orb-1"></div>
+    <div class="aurora-orb aurora-orb-2"></div>
+    <div class="aurora-orb aurora-orb-3"></div>
+  </div>
+  <header class="navbar" id="navbar">
+    <div class="container navbar-inner">
+      <a href="#home" class="brand-logo" onclick="navigateTo('home')">
+        <div class="brand-logo-icon">
+          <svg width="26" height="26" viewBox="0 0 36 36" fill="none">
+            <defs><linearGradient id="tejamGrad" x1="4" y1="10" x2="28" y2="30" gradientUnits="userSpaceOnUse"><stop offset="0%" stop-color="#38BDF8"/><stop offset="55%" stop-color="#0EA5E9"/><stop offset="100%" stop-color="#00D6A0"/></linearGradient></defs>
+            <path d="M13 11C13 7.68629 15.6863 5 19 5C22.3137 5 25 7.68629 25 11" stroke="#E2E8F0" stroke-width="2.6" stroke-linecap="round"/>
+            <path d="M7 13.5C7 12.1193 8.11929 11 9.5 11H26.5C27.6 11 28.3 12.1 27.8 13.1L26.6 15.4C26.2 16.1 25.5 16.5 24.7 16.5H19.6L16.4 28.2C16.1 29.3 15.1 30 14 30H12.2C10.8 30 9.8 28.7 10.2 27.3L13.1 16.5H9.5C8.11929 16.5 7 15.3807 7 14V13.5Z" fill="url(#tejamGrad)"/>
+            <rect x="22" y="20" width="9" height="2.4" rx="1.2" fill="#38BDF8"/><rect x="20" y="24.5" width="7" height="2.4" rx="1.2" fill="#00D6A0"/>
+          </svg>
+        </div>
+        <span class="brand-logo-text">Tejam <span>AI</span></span>
+      </a>
+      <nav class="nav-links" id="desktopNav">
+        <a href="#home" class="nav-link active" data-view="home" onclick="navigateTo('home')">Главная</a>
+        <a href="#results" class="nav-link" data-view="results" onclick="navigateTo('results')">Поиск</a>
+        <a href="#compare" class="nav-link" data-view="compare" onclick="navigateTo('compare')">Сравнение</a>
+        <a href="#assistant" class="nav-link" data-view="assistant" onclick="navigateTo('assistant')">AI Ассистент</a>
+        <a href="#tracking" class="nav-link" data-view="tracking" onclick="navigateTo('tracking')">Трекинг цен</a>
+        <a href="#gifts" class="nav-link" data-view="gifts" onclick="navigateTo('gifts')">Подарки</a>
+        <a href="#about" class="nav-link" data-view="about" onclick="navigateTo('about')">О нас</a>
+      </nav>
+      <div class="nav-actions">
+        <select id="currencySelector" class="currency-select" onchange="setCurrency(this.value)">
+          <option value="UZS">🇺🇿 UZS</option><option value="USD">🇺🇸 USD</option><option value="EUR">🇪🇺 EUR</option><option value="RUB">🇷🇺 RUB</option>
+        </select>
+        <div class="lang-switcher">
+          <button class="lang-btn active" onclick="setLanguage('ru')">RU</button>
+          <button class="lang-btn" onclick="setLanguage('uz')">UZ</button>
+          <button class="lang-btn" onclick="setLanguage('en')">EN</button>
+        </div>
+        <button class="btn-icon nav-badge-wrap" title="Избранное" onclick="navigateTo('favorites')"><i data-lucide="heart" width="18" height="18"></i><span class="count-badge" id="favBadge">0</span></button>
+        <button class="btn-icon nav-badge-wrap" title="Корзина" onclick="navigateTo('cart')"><i data-lucide="shopping-cart" width="18" height="18"></i><span class="count-badge" id="cartBadge">0</span></button>
+        <button class="btn-icon" title="Кабинет" onclick="navigateTo('dashboard')"><i data-lucide="layout-dashboard" width="18" height="18"></i></button>
+        <button class="btn-icon mobile-toggle" id="mobileMenuBtn" onclick="toggleMobileMenu()"><i data-lucide="menu" width="20" height="20"></i></button>
+      </div>
+    </div>
+    <div class="mobile-menu" id="mobileMenu">
+      <a href="#home" class="nav-link" onclick="navigateTo('home'); closeMobileMenu()">Главная</a>
+      <a href="#results" class="nav-link" onclick="navigateTo('results'); closeMobileMenu()">Поиск товаров</a>
+      <a href="#compare" class="nav-link" onclick="navigateTo('compare'); closeMobileMenu()">Сравнение цен</a>
+      <a href="#assistant" class="nav-link" onclick="navigateTo('assistant'); closeMobileMenu()">AI Ассистент</a>
+      <a href="#tracking" class="nav-link" onclick="navigateTo('tracking'); closeMobileMenu()">Отслеживание цен</a>
+      <a href="#gifts" class="nav-link" onclick="navigateTo('gifts'); closeMobileMenu()">Помощник подарков</a>
+      <a href="#dashboard" class="nav-link" onclick="navigateTo('dashboard'); closeMobileMenu()">Личный кабинет</a>
+      <a href="#about" class="nav-link" onclick="navigateTo('about'); closeMobileMenu()">О TejamAI</a>
+    </div>
+  </header>
+
+  <main>
+    <section id="view-home" class="view-section active">
+      <div class="container">
+        <div class="hero">
+          <div>
+            <span class="badge badge-emerald"><span class="pulse-dot"></span> AI-платформа умного шопинга №1 в Узбекистане</span>
+            <h1 class="hero-title">Покупайте умнее с <span class="gradient-text">TejamAI</span></h1>
+            <p class="hero-desc">Загрузите фотографию товара или просто опишите, что ищете. TejamAI найдёт лучшие предложения, сравнит цены и сэкономит ваши деньги.</p>
+            <div class="hero-cta">
+              <button class="btn btn-primary" onclick="navigateTo('results')"><i data-lucide="search" width="18" height="18"></i> Найти товар</button>
+              <button class="btn btn-secondary" onclick="navigateTo('assistant')"><i data-lucide="bot" width="18" height="18"></i> Спросить AI</button>
+            </div>
+            <div class="trust-row">
+              <div class="trust-item"><i data-lucide="sparkles" width="18" height="18"></i> Умный поиск</div>
+              <div class="trust-item"><i data-lucide="scale" width="18" height="18"></i> Сравнение цен</div>
+              <div class="trust-item"><i data-lucide="clock" width="18" height="18"></i> Экономия времени</div>
+            </div>
+          </div>
+          <div class="hero-visual">
+            <div class="floating-pill pill-top-right"><i data-lucide="sparkles" width="16" height="16" style="color:var(--emerald-primary)"></i><span>AI Recommendation</span></div>
+            <div class="glass-card hero-card">
+              <div class="hero-card-header"><span class="badge badge-emerald"><span class="pulse-dot"></span> AI Price Scanner</span><span class="badge badge-cyan">Save 25%</span></div>
+              <div class="hero-product-box">
+                <img src="https://images.unsplash.com/photo-1610945415295-d9bbf067e59c?auto=format&fit=crop&w=400&q=80" alt="Samsung" class="hero-product-img" />
+                <div>
+                  <div style="font-size:0.78rem; color:var(--emerald-primary); font-weight:700;">SAMSUNG • ЛУЧШАЯ ЦЕНА</div>
+                  <div style="font-weight:700; font-size:1.05rem; margin:2px 0;">Samsung Galaxy S24 Ultra 12/512GB</div>
+                  <div style="display:flex; align-items:baseline; gap:10px; margin-top:6px;">
+                    <span style="font-weight:800; font-size:1.15rem; color:var(--emerald-primary);">15 000 000 сум</span>
+                    <span style="font-size:0.82rem; color:var(--text-muted); text-decoration:line-through;">18 500 000 сум</span>
+                  </div>
+                </div>
+              </div>
+              <div class="hero-store-list">
+                <div class="hero-store-row best"><span><strong>Olcha.uz 🇺🇿</strong> • ⭐ 4.8</span><div style="display:flex; align-items:center; gap:8px;"><span style="color:var(--emerald-primary); font-weight:700;">15 000 000 сум</span><a href="#" onclick="showToast('Переход в Olcha.uz')" class="btn btn-primary btn-sm" style="padding:4px 10px; font-size:0.75rem;">Перейти ↗</a></div></div>
+                <div class="hero-store-row"><span>Uzum Market 🇺🇿 • ⭐ 4.9</span><div style="display:flex; align-items:center; gap:8px;"><span>15 490 000 сум</span><a href="#" onclick="showToast('Переход в Uzum')" class="btn btn-secondary btn-sm" style="padding:4px 10px; font-size:0.75rem;">В магазин ↗</a></div></div>
+                <div class="hero-store-row"><span>Texnomart 🇺🇿 • ⭐ 4.7</span><div style="display:flex; align-items:center; gap:8px;"><span>15 890 000 сум</span><a href="#" onclick="showToast('Переход в Texnomart')" class="btn btn-secondary btn-sm" style="padding:4px 10px; font-size:0.75rem;">В магазин ↗</a></div></div>
+              </div>
+              <div style="background:rgba(0,214,160,0.08); border-radius:12px; padding:12px; font-size:0.84rem; color:#CBD5E1; display:flex; gap:10px; align-items:flex-start;">
+                <i data-lucide="bot" width="18" height="18" style="color:var(--emerald-primary); flex-shrink:0; margin-top:2px;"></i>
+                <div><strong>TejamAI:</strong> Проанализировано 2 187 отзывов с 8 площадок. Самая низкая цена на <strong>Olcha.uz</strong> — экономия 3 500 000 сум!</div>
+              </div>
+            </div>
+            <div class="floating-pill pill-bottom-left"><i data-lucide="badge-check" width="16" height="16" style="color:var(--emerald-primary)"></i><span>Best Price: -3 500 000 UZS</span></div>
+          </div>
+        </div>
+        <div class="marquee-strip">
+          <div class="marquee-track">
+            <span class="marquee-pill">🇺🇿 Uzum Market <strong>• Live</strong></span>
+            <span class="marquee-pill">🇺🇿 Olcha.uz <strong>• Verified</strong></span>
+            <span class="marquee-pill">🇺🇿 Texnomart <strong>• Live</strong></span>
+            <span class="marquee-pill">🇺🇿 Asaxiy <strong>• Verified</strong></span>
+            <span class="marquee-pill">🇺🇿 Mediapark <strong>• Live</strong></span>
+            <span class="marquee-pill">🇺🇿 Alif Shop <strong>• Verified</strong></span>
+            <span class="marquee-pill">🇺🇿 Openshop.uz <strong>• Live</strong></span>
+            <span class="marquee-pill">🇺🇿 ZoodMall <strong>• Verified</strong></span>
+            <span class="marquee-pill">🇺🇸 Amazon <strong>• Synced</strong></span>
+            <span class="marquee-pill">🇺🇸 eBay <strong>• Live</strong></span>
+            <span class="marquee-pill">🇺🇸 Walmart <strong>• Synced</strong></span>
+            <span class="marquee-pill">🇺🇸 Etsy <strong>• Handmade</strong></span>
+            <span class="marquee-pill">🇨🇳 AliExpress <strong>• Global</strong></span>
+            <span class="marquee-pill">🇨🇳 Temu <strong>• Live</strong></span>
+            <span class="marquee-pill">🇨🇳 Taobao <strong>• Synced</strong></span>
+            <span class="marquee-pill">🇨🇳 Tmall <strong>• Verified</strong></span>
+            <span class="marquee-pill">🇨🇳 JD.com <strong>• Live</strong></span>
+            <span class="marquee-pill">🇨🇳 Pinduoduo <strong>• Synced</strong></span>
+            <span class="marquee-pill">🇨🇳 Douyin <strong>• Live</strong></span>
+            <span class="marquee-pill">🌍 Wildberries <strong>• Live</strong></span>
+            <span class="marquee-pill">🌍 Ozon <strong>• Live</strong></span>
+            <span class="marquee-pill">🇹🇷 Trendyol <strong>• Fashion</strong></span>
+            <span class="marquee-pill">🇯🇵 Rakuten <strong>• Japan</strong></span>
+            <span class="marquee-pill">🇯🇵 Amazon JP <strong>• Synced</strong></span>
+            <span class="marquee-pill">🇰🇷 Coupang <strong>• Korea</strong></span>
+            <span class="marquee-pill">🇮🇳 Flipkart <strong>• India</strong></span>
+            <span class="marquee-pill">🇮🇳 Amazon IN <strong>• Synced</strong></span>
+            <span class="marquee-pill">🇧🇷 Mercado Livre <strong>• Brazil</strong></span>
+            <span class="marquee-pill">🇸🇬 Shopee <strong>• SEA</strong></span>
+            <span class="marquee-pill">🇩🇪 Amazon DE <strong>• Synced</strong></span>
+            <span class="marquee-pill">🇬🇧 Amazon UK <strong>• Synced</strong></span>
+            <span class="marquee-pill">🇦🇪 Noon <strong>• UAE</strong></span>
+            <span class="marquee-pill">🇸🇦 Amazon SA <strong>• Synced</strong></span>
+          </div>
+        </div>
+        <div class="glass-card ai-search-box">
+          <div style="display:flex; flex-wrap:wrap; justify-content:space-between; align-items:center; gap:12px; margin-bottom:16px;">
+            <div class="search-tabs" style="margin-bottom:0;">
+              <button class="search-tab active" id="tabTextSearch" onclick="switchSearchMode('text')"><i data-lucide="search" width="16" height="16"></i> Текстовый поиск</button>
+              <button class="search-tab" id="tabImageSearch" onclick="switchSearchMode('image')"><i data-lucide="camera" width="16" height="16"></i> Поиск по фото</button>
+            </div>
+            <span class="badge badge-emerald"><span class="pulse-dot"></span> Neural Engine v2.6</span>
+          </div>
+          <div id="textSearchPanel">
+            <div class="search-bar-wrap">
+              <input type="text" id="homeSearchInput" class="search-input-main" placeholder="Какой товар вы ищете? Например: AirPods Pro 2, ноутбук до 9 млн..." onkeydown="if(event.key==='Enter') executeTextSearch()" />
+              <button class="search-clear-btn" onclick="clearHomeSearch()"><i data-lucide="x" width="18" height="18"></i></button>
+              <button class="btn btn-primary" onclick="executeTextSearch()"><i data-lucide="sparkles" width="18" height="18"></i> Найти</button>
+            </div>
+            <div class="chip-row">
+              <span style="font-size:0.82rem; color:var(--text-muted);">Популярные запросы:</span>
+              <button class="query-chip" onclick="quickSearch('AirPods')">AirPods Pro 2</button>
+              <button class="query-chip" onclick="quickSearch('принтер')">Принтеры HP / Epson</button>
+              <button class="query-chip" onclick="quickSearch('одежда')">Одежда и куртки</button>
+              <button class="query-chip" onclick="quickSearch('ноутбук')">Ноутбук для работы</button>
+              <button class="query-chip" onclick="quickSearch('Nike')">Кроссовки Nike</button>
+              <button class="query-chip" onclick="quickSearch('iPhone')">iPhone 15 Pro</button>
+            </div>
+          </div>
+          <div id="imageSearchPanel" style="display:none;">
+            <div class="dropzone" id="imageDropzone">
+              <div id="dropzonePrompt">
+                <i data-lucide="scan-line" width="42" height="42" style="color:var(--emerald-primary); margin:0 auto 12px;"></i>
+                <h3 style="margin-bottom:6px;">Сфотографируйте товар или загрузите из галереи</h3>
+                <p style="color:var(--text-secondary); font-size:0.9rem; max-width:580px; margin:0 auto 16px;">TejamAI Vision распознает товар и сравнит цены по всему миру.</p>
+                <div style="display:flex; gap:12px; justify-content:center; flex-wrap:wrap;">
+                  <button class="btn btn-primary" onclick="startLiveCamera()"><i data-lucide="camera" width="18" height="18"></i> Включить камеру</button>
+                  <button class="btn btn-outline-emerald" onclick="document.getElementById('imageFileInput').click()"><i data-lucide="image" width="18" height="18"></i> Загрузить фото</button>
+                </div>
+              </div>
+              <input type="file" id="imageFileInput" accept="image/*" style="display:none;" onchange="handleImageFile(this.files[0])" />
+            </div>
+          </div>
+          <div style="margin-top:26px; padding-top:22px; border-top:1px solid var(--border-color);">
+            <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; margin-bottom:12px;">
+              <div><span class="badge badge-emerald">Выберите категорию</span><h3 style="margin-top:6px; font-size:1.15rem;">TejamAI покажет лучшие варианты</h3></div>
+              <span style="font-size:0.84rem; color:var(--text-secondary);">32 категории • 1200+ предложений</span>
+            </div>
+            <div class="category-hub-grid" id="homeCategoryHub"></div>
+          </div>
+        </div>
+        <div class="section-header" style="margin-top:40px;">
+          <span class="badge badge-emerald" style="margin-bottom:10px;">3 простых шага</span>
+          <h2 class="section-title">Как работает TejamAI</h2>
+          <p class="section-subtitle">От поиска товара до реальной экономии за считанные секунды</p>
+        </div>
+        <div class="glass-card video-showcase">
+          <div class="video-grid">
+            <div class="video-stage">
+              <iframe src="https://www.youtube.com/embed/dQw4w9WgXcQ?rel=0&modestbranding=1" title="TejamAI Presentation" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+            </div>
+            <div>
+              <span class="badge badge-cyan" style="margin-bottom:10px;">Интерактивная презентация</span>
+              <h3 style="font-family:var(--font-display); font-size:1.55rem; margin-bottom:10px; line-height:1.25;">Как TejamAI находит лучшую цену за секунды</h3>
+              <p style="color:var(--text-secondary); font-size:0.92rem; margin-bottom:18px;">Посмотрите видео-демонстрацию работы компьютерного зрения, парсера 30+ маркетплейсов и анализатора отзывов.</p>
+              <div style="display:flex; flex-direction:column; gap:9px;">
+                <button class="btn btn-outline-emerald btn-sm video-scene-btn" onclick="showToast('Сцена 1: Распознавание товара по фото')"><i data-lucide="scan-line" width="16" height="16"></i> 01. Распознавание товара по фото</button>
+                <button class="btn btn-secondary btn-sm video-scene-btn" onclick="showToast('Сцена 2: Сравнение цен по 30+ площадкам')"><i data-lucide="layers" width="16" height="16"></i> 02. Сравнение цен и отзывов</button>
+                <button class="btn btn-secondary btn-sm video-scene-btn" onclick="showToast('Сцена 3: Переход в магазин')"><i data-lucide="trending-down" width="16" height="16"></i> 03. График скидок и переход ↗</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="steps-grid">
+          <div class="glass-card step-card"><div class="step-number">01</div><h3 style="margin-bottom:10px;">Выберите категорию или фото</h3><p style="color:var(--text-secondary); font-size:0.94rem;">Укажите нужную категорию, опишите товар или сфотографируйте его камерой.</p></div>
+          <div class="glass-card step-card"><div class="step-number">02</div><h3 style="margin-bottom:10px;">Сравните предложения</h3><p style="color:var(--text-secondary); font-size:0.94rem;">TejamAI собирает цены, рейтинги и реальные отзывы со всех маркетплейсов мира.</p></div>
+          <div class="glass-card step-card"><div class="step-number">03</div><h3 style="margin-bottom:10px;">Переходите и экономьте</h3><p style="color:var(--text-secondary); font-size:0.94rem;">Нажмите «Перейти в магазин ↗» и купите товар напрямую по самой низкой цене.</p></div>
+        </div>
+        <div class="section-header">
+          <span class="badge badge-cyan" style="margin-bottom:10px;">Преимущества платформы</span>
+          <h2 class="section-title">Почему выбирают TejamAI?</h2>
+          <p class="section-subtitle">Технологии искусственного интеллекта для прозрачных и выгодных покупок</p>
+        </div>
+        <div class="features-grid">
+          <div class="glass-card feature-card"><div class="feature-icon"><i data-lucide="cpu"></i></div><h4 style="margin-bottom:8px;">AI-поиск товаров</h4><p style="color:var(--text-secondary); font-size:0.88rem;">Понимает естественные запросы с учётом ваших задач и бюджета.</p></div>
+          <div class="glass-card feature-card"><div class="feature-icon"><i data-lucide="arrow-left-right"></i></div><h4 style="margin-bottom:8px;">Умное сравнение цен</h4><p style="color:var(--text-secondary); font-size:0.88rem;">Наглядное сопоставление предложений и расчёт реальной выгоды.</p></div>
+          <div class="glass-card feature-card"><div class="feature-icon"><i data-lucide="scan"></i></div><h4 style="margin-bottom:8px;">Поиск по фотографии</h4><p style="color:var(--text-secondary); font-size:0.88rem;">Загрузите снимок вещи, чтобы мгновенно найти аналоги в каталоге.</p></div>
+          <div class="glass-card feature-card"><div class="feature-icon"><i data-lucide="sparkles"></i></div><h4 style="margin-bottom:8px;">Умные рекомендации</h4><p style="color:var(--text-secondary); font-size:0.88rem;">Советы по выбору оптимального соотношения цены и рейтинга.</p></div>
+          <div class="glass-card feature-card"><div class="feature-icon"><i data-lucide="bell-ring"></i></div><h4 style="margin-bottom:8px;">Отслеживание цен</h4><p style="color:var(--text-secondary); font-size:0.88rem;">Установите желаемую цену в сумах и следите за динамикой графика.</p></div>
+          <div class="glass-card feature-card"><div class="feature-icon"><i data-lucide="zap"></i></div><h4 style="margin-bottom:8px;">Экономия времени</h4><p style="color:var(--text-secondary); font-size:0.88rem;">Больше не нужно открывать десятки вкладок разных маркетплейсов.</p></div>
+          <div class="glass-card feature-card"><div class="feature-icon"><i data-lucide="shield-check"></i></div><h4 style="margin-bottom:8px;">Прозрачность данных</h4><p style="color:var(--text-secondary); font-size:0.88rem;">История изменения цен, честные характеристики и отзывы.</p></div>
+          <div class="glass-card feature-card"><div class="feature-icon"><i data-lucide="globe"></i></div><h4 style="margin-bottom:8px;">Поддержка O'zbekcha</h4><p style="color:var(--text-secondary); font-size:0.88rem;">Полноценный интерфейс на узбекском, русском и английском.</p></div>
+        </div>
+        <div class="glass-card telegram-card">
+          <div>
+            <span class="badge badge-cyan" style="margin-bottom:12px;">Скоро в Telegram</span>
+            <h2 style="font-family:var(--font-display); font-size:1.85rem; margin-bottom:12px;">TejamAI прямо в вашем Telegram</h2>
+            <p style="color:var(--text-secondary); margin-bottom:20px;">Отправляйте фото товара боту @TejamAI_bot, получайте уведомления о снижении цены и персональные подборки скидок.</p>
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:22px; font-size:0.9rem;">
+              <div><i data-lucide="check-circle-2" width="16" height="16" style="color:var(--emerald-primary); vertical-align:middle;"></i> Уведомления о скидках</div>
+              <div><i data-lucide="check-circle-2" width="16" height="16" style="color:var(--emerald-primary); vertical-align:middle;"></i> Поиск товаров по фото</div>
+              <div><i data-lucide="check-circle-2" width="16" height="16" style="color:var(--emerald-primary); vertical-align:middle;"></i> AI-советы по покупкам</div>
+              <div><i data-lucide="check-circle-2" width="16" height="16" style="color:var(--emerald-primary); vertical-align:middle;"></i> Синхронизация с кабинетом</div>
+            </div>
+            <button class="btn btn-outline-emerald" onclick="showToast('Интеграция Telegram Bot запланирована!')"><i data-lucide="send" width="16" height="16"></i> Демонстрация уведомлений</button>
+          </div>
+          <div>
+            <div class="tg-mockup">
+              <div style="display:flex; align-items:center; gap:10px; padding-bottom:12px; border-bottom:1px solid var(--border-color); margin-bottom:12px;">
+                <div style="width:36px; height:36px; border-radius:50%; background:linear-gradient(135deg,#38BDF8,#00D6A0); display:flex; align-items:center; justify-content:center; color:#051310; font-weight:800;">T</div>
+                <div><div style="font-weight:700; font-size:0.92rem;">TejamAI Smart Bot</div><div style="font-size:0.75rem; color:var(--emerald-primary);">bot • online</div></div>
+              </div>
+              <div class="tg-msg">📉 <strong>Цена снизилась на 18%!</strong><br/>Товар <em>Sony WH-1000XM5</em> достиг вашей целевой цены: <strong>3 890 000 сум</strong>.</div>
+              <div class="tg-msg" style="border-left-color:var(--emerald-primary);">🤖 <strong>AI-совет:</strong> Это минимальная цена за 60 дней. Экономия — 860 000 сум.</div>
+            </div>
+          </div>
+        </div>
+        <div class="section-header"><h2 class="section-title">Часто задаваемые вопросы</h2><p class="section-subtitle">Честные ответы о работе TejamAI</p></div>
+        <div class="faq-list" id="faqContainer"></div>
+      </div>
+    </section>
+    <section id="view-results" class="view-section">
+      <div class="container">
+        <div class="glass-card" style="padding:20px; margin-bottom:20px;">
+          <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; margin-bottom:12px;">
+            <span class="badge badge-emerald">Шаг 1: Выберите категорию</span>
+            <span style="font-size:0.84rem; color:var(--text-secondary);" id="categorySelectedHint">Выберите категорию, чтобы увидеть лучшие AI-варианты</span>
+          </div>
+          <div class="category-hub-grid" id="resultsCategoryHub" style="margin:0;"></div>
+        </div>
+        <div id="activeSearchContextBanner" class="demo-banner" style="background:rgba(0,214,160,0.08); border-color:rgba(0,214,160,0.28); color:var(--text-main);">
+          <i data-lucide="sparkles" width="18" height="18" style="color:var(--emerald-primary);"></i>
+          <span id="searchContextLabel">Выберите категорию выше — TejamAI мгновенно подберёт лучшие предложения.</span>
+        </div>
+        <div class="glass-card" style="padding:20px; margin-bottom:24px; display:flex; flex-wrap:wrap; gap:14px; align-items:center; justify-content:space-between;">
+          <div style="flex:1; min-width:240px;"><input type="text" id="catalogSearchInput" class="form-input" placeholder="Уточните модель, бренд или бюджет..." oninput="applyFilters()" /></div>
+          <div style="display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
+            <span id="resultsCountText" style="font-size:0.9rem; color:var(--text-secondary);">Выберите категорию</span>
+            <select id="sortSelect" class="form-select" style="width:auto;" onchange="applyFilters()">
+              <option value="best_value">Сортировка: Лучшие варианты (AI)</option>
+              <option value="price_asc">Сначала дешёвые</option>
+              <option value="price_desc">Сначала дорогие</option>
+              <option value="rating_desc">Высокий рейтинг</option>
+              <option value="discount_desc">Максимальная скидка</option>
+            </select>
+          </div>
+        </div>
+        <div class="results-layout">
+          <aside class="glass-card filters-sidebar">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;"><h3 style="font-size:1.05rem;">Фильтры</h3><button style="font-size:0.82rem; color:var(--emerald-primary);" onclick="resetFilters()">Сбросить</button></div>
+            <div class="filter-block"><div class="filter-title">Категория</div><select id="filterCategory" class="form-select" onchange="selectCategoryAndShowBest(this.value)"><option value="">-- Выберите --</option><option value="all">Все категории</option></select></div>
+            <div class="filter-block"><div class="filter-title">Цена (UZS)</div><div class="price-inputs"><input type="number" id="filterMinPrice" class="form-input" placeholder="От" oninput="applyFilters()" /><input type="number" id="filterMaxPrice" class="form-input" placeholder="До" oninput="applyFilters()" /></div></div>
+            <div class="filter-block"><div class="filter-title">Бренд</div><select id="filterBrand" class="form-select" onchange="applyFilters()"><option value="all">Все бренды</option></select></div>
+            <div class="filter-block"><div class="filter-title">Магазин</div><select id="filterStore" class="form-select" onchange="applyFilters()"><option value="all">Все маркетплейсы</option></select></div>
+            <div class="filter-block"><div class="filter-title">Дополнительно</div><label class="checkbox-label"><input type="checkbox" id="filterDiscountOnly" onchange="applyFilters()" /> Только со скидкой 15%+</label><label class="checkbox-label"><input type="checkbox" id="filterInStock" checked onchange="applyFilters()" /> В наличии</label></div>
+          </aside>
+          <div>
+            <div class="products-grid" id="productsGrid"></div>
+            <div id="loadMoreWrap" style="text-align:center; margin-top:28px; display:none;"><button class="btn btn-outline-emerald" onclick="loadMoreProducts()"><i data-lucide="plus-circle" width="18" height="18"></i> Загрузить ещё</button></div>
+          </div>
+        </div>
+      </div>
+    </section>
+    <section id="view-product" class="view-section"><div class="container" id="productDetailContainer"></div></section>
+    <section id="view-compare" class="view-section">
+      <div class="container">
+        <div style="display:flex; flex-wrap:wrap; justify-content:space-between; align-items:center; gap:14px; margin-bottom:24px;">
+          <div><h1 class="section-title" style="margin-bottom:4px;">Умное сравнение товаров</h1><p style="color:var(--text-secondary);">Сопоставление цен, характеристик и рейтингов с AI-вердиктом</p></div>
+          <button class="btn btn-outline-emerald btn-sm" onclick="loadDefaultComparison()"><i data-lucide="refresh-cw" width="16" height="16"></i> Загрузить пример</button>
+        </div>
+        <div id="aiCompareVerdict" class="glass-card" style="padding:20px; margin-bottom:24px; border-color:var(--border-emerald);"></div>
+        <div class="glass-card compare-scroll"><table class="compare-table" id="compareTable"></table></div>
+      </div>
+    </section>
+    <section id="view-assistant" class="view-section">
+      <div class="container">
+        <div class="glass-card chat-container">
+          <div class="chat-header">
+            <div style="display:flex; align-items:center; gap:12px;">
+              <div style="width:40px; height:40px; border-radius:12px; background:linear-gradient(135deg,#38BDF8,#00D6A0); display:flex; align-items:center; justify-content:center; color:#051310; font-weight:800;">AI</div>
+              <div><div style="font-weight:700;">TejamAI Shopping Copilot</div><div style="font-size:0.78rem; color:var(--emerald-primary);"><span class="pulse-dot"></span> Online • Анализ 30+ маркетплейсов</div></div>
+            </div>
+            <button class="btn btn-secondary btn-sm" onclick="resetChat()">Очистить</button>
+          </div>
+          <div class="chat-messages" id="chatMessages"></div>
+          <div class="chat-footer">
+            <div class="chip-row" style="margin-top:0; margin-bottom:10px;">
+              <button class="query-chip" onclick="sendAssistantPrompt('Какие AirPods лучше выбрать?')">🎧 Лучшие AirPods</button>
+              <button class="query-chip" onclick="sendAssistantPrompt('Какой ноутбук подойдёт для программирования?')">💻 Ноутбук для кода</button>
+              <button class="query-chip" onclick="sendAssistantPrompt('Какой смартфон лучше купить?')">📱 Топ смартфон</button>
+              <button class="query-chip" onclick="sendAssistantPrompt('Стоит ли покупать сейчас?')">📉 Стоит ли брать?</button>
+            </div>
+            <div style="display:flex; gap:10px;">
+              <input type="text" id="chatInput" class="form-input" placeholder="Спросите TejamAI о любом товаре..." onkeydown="if(event.key==='Enter') handleChatSubmit()" />
+              <button class="btn btn-primary" onclick="handleChatSubmit()"><i data-lucide="send" width="18" height="18"></i></button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+    <section id="view-tracking" class="view-section">
+      <div class="container">
+        <div style="display:flex; flex-wrap:wrap; justify-content:space-between; align-items:center; gap:14px; margin-bottom:24px;">
+          <div><h1 class="section-title" style="margin-bottom:4px;">Отслеживание цен</h1><p style="color:var(--text-secondary);">Устанавливайте целевую цену и получайте уведомления о скидках</p></div>
+          <button class="btn btn-primary btn-sm" onclick="simulatePriceDrop()"><i data-lucide="trending-down" width="16" height="16"></i> Проверить снижение цен</button>
+        </div>
+        <div id="trackingAlertsContainer" style="margin-bottom:20px;"></div>
+        <div class="glass-card" style="padding:22px; margin-bottom:24px; display:grid; grid-template-columns:1.5fr 1fr auto; gap:12px; align-items:end;">
+          <div><label class="form-label">Выберите товар</label><select id="trackProductSelect" class="form-select"></select></div>
+          <div><label class="form-label">Целевая цена (сум)</label><input type="number" id="trackTargetPriceInput" class="form-input" placeholder="Например: 3800000" /></div>
+          <button class="btn btn-primary" onclick="addTrackedItem()">Добавить</button>
+        </div>
+        <div class="product-detail-grid">
+          <div id="trackedItemsList" style="display:flex; flex-direction:column; gap:14px;"></div>
+          <div class="glass-card" style="padding:24px;"><h3 style="margin-bottom:6px;">График истории цены (UZS)</h3><p style="font-size:0.86rem; color:var(--text-secondary); margin-bottom:16px;">Динамика минимальной цены за 6 недель</p><div style="height:290px;"><canvas id="trackingPriceChart"></canvas></div></div>
+        </div>
+      </div>
+    </section>
+    <section id="view-favorites" class="view-section">
+      <div class="container"><h1 class="section-title" style="margin-bottom:8px;">Избранные товары</h1><p style="color:var(--text-secondary); margin-bottom:24px;">Сохранённые предложения в вашем браузере</p><div id="favoritesContainer" class="products-grid"></div></div>
+    </section>
+    <section id="view-cart" class="view-section">
+      <div class="container"><h1 class="section-title" style="margin-bottom:8px;">Корзина покупок</h1><p style="color:var(--text-secondary); margin-bottom:24px;">Автоматический подсчёт итоговой стоимости и экономии</p><div id="cartContainer"></div></div>
+    </section>
+    <section id="view-gifts" class="view-section">
+      <div class="container">
+        <div class="section-header"><span class="badge badge-emerald" style="margin-bottom:10px;">AI Gift Finder</span><h1 class="section-title">Умный помощник по выбору подарков</h1><p class="section-subtitle">Укажите, кому и по какому поводу вы ищете подарок</p></div>
+        <div class="glass-card" style="padding:28px; max-width:900px; margin:0 auto 32px;">
+          <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:16px;">
+            <div class="form-group"><label class="form-label">Для кого?</label><select id="giftRecipient" class="form-select"><option value="friend">Другу / Подруге</option><option value="mother">Маме</option><option value="father">Папе</option><option value="brother">Брату</option><option value="sister">Сестре</option><option value="colleague">Коллеге</option></select></div>
+            <div class="form-group"><label class="form-label">Повод</label><select id="giftOccasion" class="form-select"><option value="birthday">День рождения</option><option value="newyear">Новый год</option><option value="graduation">Выпускной</option><option value="anniversary">Годовщина</option></select></div>
+            <div class="form-group"><label class="form-label">Бюджет (сум)</label><input type="number" id="giftBudget" class="form-input" value="5000000" step="100000" /></div>
+            <div class="form-group"><label class="form-label">Интересы</label><select id="giftInterest" class="form-select"><option value="all">Любые</option><option value="tech">Технологии</option><option value="gaming">Гейминг</option><option value="sports">Спорт</option><option value="home">Уют и дом</option><option value="fashion">Стиль</option></select></div>
+          </div>
+          <button class="btn btn-primary" onclick="generateGiftRecommendations()"><i data-lucide="gift" width="18" height="18"></i> Подобрать подарки</button>
+        </div>
+        <div id="giftResultsGrid" class="products-grid"></div>
+      </div>
+    </section>
+    <section id="view-dashboard" class="view-section">
+      <div class="container">
+        <div style="display:flex; flex-wrap:wrap; justify-content:space-between; align-items:center; gap:14px; margin-bottom:24px;">
+          <div><h1 class="section-title" style="margin-bottom:4px;">Добро пожаловать в TejamAI!</h1><p style="color:var(--text-secondary);">Персональная аналитика экономии и активные уведомления</p></div>
+          <span class="badge badge-emerald">Pro Member • Tashkent, UZ</span>
+        </div>
+        <div class="kpi-grid" id="dashboardKpis"></div>
+        <div class="product-detail-grid">
+          <div class="glass-card" style="padding:24px;"><h3 style="margin-bottom:14px;">Отслеживаемые товары</h3><div id="dashboardTrackedList"></div></div>
+          <div class="glass-card" style="padding:24px;"><h3 style="margin-bottom:14px;">Последняя активность</h3><div id="dashboardActivityFeed" style="display:flex; flex-direction:column; gap:12px;"></div></div>
+        </div>
+      </div>
+    </section>
+    <section id="view-about" class="view-section">
+      <div class="container">
+        <div class="section-header"><h1 class="section-title">О <span class="gradient-text">TejamAI</span></h1><p class="section-subtitle">Мы делаем шопинг прозрачным, умным и выгодным</p></div>
+        <div class="glass-card" style="padding:36px; max-width:900px; margin:0 auto;">
+          <p style="color:var(--text-secondary); font-size:1.05rem; line-height:1.8; margin-bottom:20px;">TejamAI — это инновационная AI-платформа для умного шопинга, созданная в Узбекистане. Мы объединяем данные с 30+ маркетплейсов, анализируем тысячи отзывов и помогаем находить лучшие цены за секунды.</p>
+          <div class="features-grid" style="margin-bottom:0;">
+            <div class="glass-card feature-card"><div class="feature-icon"><i data-lucide="users"></i></div><h4>50 000+</h4><p style="color:var(--text-secondary); font-size:0.88rem;">Активных пользователей</p></div>
+            <div class="glass-card feature-card"><div class="feature-icon"><i data-lucide="piggy-bank"></i></div><h4>120 млн сум</h4><p style="color:var(--text-secondary); font-size:0.88rem;">Сэкономлено пользователями</p></div>
+            <div class="glass-card feature-card"><div class="feature-icon"><i data-lucide="store"></i></div><h4>30+</h4><p style="color:var(--text-secondary); font-size:0.88rem;">Маркетплейсов подключено</p></div>
+            <div class="glass-card feature-card"><div class="feature-icon"><i data-lucide="package"></i></div><h4>1200+</h4><p style="color:var(--text-secondary); font-size:0.88rem;">Товаров в каталоге</p></div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <div class="toast-container" id="toastContainer"></div>
+  <footer>
+    <div class="container">
+      <div class="footer-grid">
+        <div class="footer-col">
+          <div class="brand-logo" style="margin-bottom:14px;">
+            <div class="brand-logo-icon">
+              <svg width="26" height="26" viewBox="0 0 36 36" fill="none">
+                <path d="M13 11C13 7.68629 15.6863 5 19 5C22.3137 5 25 7.68629 25 11" stroke="#E2E8F0" stroke-width="2.6" stroke-linecap="round"/>
+                <path d="M7 13.5C7 12.1193 8.11929 11 9.5 11H26.5C27.6 11 28.3 12.1 27.8 13.1L26.6 15.4C26.2 16.1 25.5 16.5 24.7 16.5H19.6L16.4 28.2C16.1 29.3 15.1 30 14 30H12.2C10.8 30 9.8 28.7 10.2 27.3L13.1 16.5H9.5C8.11929 16.5 7 15.3807 7 14V13.5Z" fill="url(#tejamGrad)"/>
+                <rect x="22" y="20" width="9" height="2.4" rx="1.2" fill="#38BDF8"/><rect x="20" y="24.5" width="7" height="2.4" rx="1.2" fill="#00D6A0"/>
+              </svg>
+            </div>
+            <span class="brand-logo-text">Tejam <span>AI</span></span>
+          </div>
+          <p style="color:var(--text-secondary); font-size:0.9rem; margin-bottom:14px;">AI-платформа умного шопинга №1 в Узбекистане</p>
+          <div class="social-links">
+            <a href="https://instagram.com/tejamai" target="_blank" rel="noopener noreferrer" class="social-link instagram" title="Instagram"><i data-lucide="instagram" width="16" height="16"></i></a>
+            <a href="https://t.me/tejamai_bot" target="_blank" rel="noopener noreferrer" class="social-link telegram" title="Telegram"><i data-lucide="send" width="16" height="16"></i></a>
+            <a href="https://youtube.com/@tejamai" target="_blank" rel="noopener noreferrer" class="social-link youtube" title="YouTube"><i data-lucide="youtube" width="16" height="16"></i></a>
+            <a href="https://facebook.com/tejamai" target="_blank" rel="noopener noreferrer" class="social-link facebook" title="Facebook"><i data-lucide="facebook" width="16" height="16"></i></a>
+          </div>
+        </div>
+        <div class="footer-col"><h4>Платформа</h4><div class="footer-links"><a href="#" onclick="navigateTo('results')">Поиск товаров</a><a href="#" onclick="navigateTo('compare')">Сравнение цен</a><a href="#" onclick="navigateTo('assistant')">AI Ассистент</a><a href="#" onclick="navigateTo('tracking')">Трекинг цен</a></div></div>
+        <div class="footer-col"><h4>Компания</h4><div class="footer-links"><a href="#" onclick="navigateTo('about')">О нас</a><a href="#">Блог</a><a href="#">Карьера</a><a href="#">Контакты</a></div></div>
+        <div class="footer-col"><h4>Поддержка</h4><div class="footer-links"><a href="#">FAQ</a><a href="#">Помощь</a><a href="#">Конфиденциальность</a><a href="#">Условия</a></div></div>
+      </div>
+      <div class="footer-bottom">
+        <span>© 2026 TejamAI. Все права защищены.</span>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    let currentView = 'home';
+    let favorites = JSON.parse(localStorage.getItem('tejam_favorites') || '[]');
+    let cart = JSON.parse(localStorage.getItem('tejam_cart') || '[]');
+    let trackedItems = JSON.parse(localStorage.getItem('tejam_tracked') || '[]');
+    let currentCurrency = 'UZS';
+    let currentLanguage = 'ru';
+    let currentCategory = 'all';
+    let currentProducts = [];
+    let chatHistory = [];
+    let priceChartInstance = null;
+    let visibleCount = 16;
+
+    const currencyRates = { UZS: 1, USD: 0.000079, EUR: 0.000073, RUB: 0.0072 };
+    const currencySymbols = { UZS: 'сум', USD: '$', EUR: '€', RUB: '₽' };
+
+    function formatPrice(uzs) {
+      if (currentCurrency === 'UZS') return Math.round(uzs).toLocaleString('ru-RU') + ' сум';
+      const converted = uzs * currencyRates[currentCurrency];
+      return currencySymbols[currentCurrency] + Math.round(converted).toLocaleString('ru-RU');
+    }
+
+    function setCurrency(val) { currentCurrency = val; showToast(`Валюта: ${val}`); if (currentProducts.length) renderProducts(currentProducts, 'productsGrid'); if (currentView === 'favorites') renderFavorites(); if (currentView === 'cart') renderCart(); }
+    function setLanguage(lang) { currentLanguage = lang; document.querySelectorAll('.lang-btn').forEach(b => b.classList.remove('active')); document.querySelector(`.lang-btn[onclick*="'${lang}'"]`)?.classList.add('active'); showToast(`Язык: ${lang.toUpperCase()}`); }
+
+    function showToast(msg) {
+      const container = document.getElementById('toastContainer');
+      const toast = document.createElement('div');
+      toast.className = 'toast';
+      toast.innerHTML = `<i data-lucide="check-circle-2" width="18" height="18" style="color:var(--emerald-primary)"></i><span>${msg}</span>`;
+      container.appendChild(toast); lucide.createIcons(); setTimeout(() => toast.remove(), 3000);
+    }
+
+    function navigateTo(view) {
+      document.querySelectorAll('.view-section').forEach(s => s.classList.remove('active'));
+      const el = document.getElementById('view-' + view);
+      if (el) { el.classList.add('active'); currentView = view; window.scrollTo({ top: 0, behavior: 'smooth' }); }
+      document.querySelectorAll('.nav-link').forEach(l => l.classList.toggle('active', l.dataset.view === view));
+      if (view === 'favorites') renderFavorites();
+      if (view === 'cart') renderCart();
+      if (view === 'results') { populateCategoryHub('resultsCategoryHub'); applyFilters(); }
+      if (view === 'tracking') renderTracking();
+      if (view === 'dashboard') renderDashboard();
+    }
+
+    function toggleMobileMenu() { document.getElementById('mobileMenu').classList.toggle('open'); }
+    function closeMobileMenu() { document.getElementById('mobileMenu').classList.remove('open'); }
+    const PRODUCTS = [
+      { id: 1, title: 'iPhone 15 Pro Max 256GB', brand: 'Apple', category: 'Смартфоны', price: 16990000, oldPrice: 18990000, rating: 4.9, reviews: 3421, store: 'Uzum Market', storeIcon: '🇺🇿', image: 'https://images.unsplash.com/photo-1695048133142-1a20484d2569?auto=format&fit=crop&w=600&q=80', inStock: true, tags: ['flagship', 'ios'] },
+      { id: 2, title: 'Samsung Galaxy S24 Ultra 12/512GB', brand: 'Samsung', category: 'Смартфоны', price: 15000000, oldPrice: 18500000, rating: 4.8, reviews: 2187, store: 'Olcha.uz', storeIcon: '🇺🇿', image: 'https://images.unsplash.com/photo-1610945415295-d9bbf067e59c?auto=format&fit=crop&w=600&q=80', inStock: true, tags: ['flagship', 'android'] },
+      { id: 3, title: 'iPhone 15 128GB Black', brand: 'Apple', category: 'Смартфоны', price: 11990000, oldPrice: 13500000, rating: 4.8, reviews: 4521, store: 'Texnomart', storeIcon: '🇺🇿', image: 'https://images.unsplash.com/photo-1695048133142-1a20484d2569?auto=format&fit=crop&w=600&q=80', inStock: true, tags: ['ios'] },
+      { id: 4, title: 'Samsung Galaxy A17 6/128GB', brand: 'Samsung', category: 'Смартфоны', price: 2799000, oldPrice: 3499000, rating: 4.5, reviews: 1234, store: 'Asaxiy', storeIcon: '🇺🇿', image: 'https://images.unsplash.com/photo-1598327105666-5b89351aff97?auto=format&fit=crop&w=600&q=80', inStock: true, tags: ['budget'] },
+      { id: 5, title: 'Xiaomi 14 Pro 12/256GB', brand: 'Xiaomi', category: 'Смартфоны', price: 8900000, oldPrice: 10500000, rating: 4.7, reviews: 1567, store: 'Alif Shop', storeIcon: '🇺🇿', image: 'https://images.unsplash.com/photo-1598327105666-5b89351aff97?auto=format&fit=crop&w=600&q=80', inStock: true, tags: ['flagship'] },
+      { id: 6, title: 'MacBook Air 15" M3 8/256GB', brand: 'Apple', category: 'Ноутбуки', price: 16721100, oldPrice: 18900000, rating: 4.9, reviews: 1876, store: 'Olcha.uz', storeIcon: '🇺🇿', image: 'https://images.unsplash.com/photo-1517336714731-489689fd1ca8?auto=format&fit=crop&w=600&q=80', inStock: true, tags: ['ultrabook', 'macos'] },
+      { id: 7, title: 'MacBook Air 13" M3 8/256GB', brand: 'Apple', category: 'Ноутбуки', price: 14500000, oldPrice: 16500000, rating: 4.9, reviews: 1203, store: 'Uzum Market', storeIcon: '🇺🇿', image: 'https://images.unsplash.com/photo-1517336714731-489689fd1ca8?auto=format&fit=crop&w=600&q=80', inStock: true, tags: ['ultrabook', 'macos'] },
+      { id: 8, title: 'ASUS ROG Strix G16 RTX 4060', brand: 'Asus', category: 'Ноутбуки', price: 18900000, oldPrice: 21000000, rating: 4.7, reviews: 654, store: 'Texnomart', storeIcon: '🇺🇿', image: 'https://images.unsplash.com/photo-1603302576837-37561b2e2302?auto=format&fit=crop&w=600&q=80', inStock: true, tags: ['gaming'] },
+      { id: 9, title: 'Lenovo ThinkPad X1 Carbon Gen 11', brand: 'Lenovo', category: 'Ноутбуки', price: 17400000, oldPrice: 19500000, rating: 4.8, reviews: 432, store: 'Amazon Global', storeIcon: '🇺🇸', image: 'https://images.unsplash.com/photo-1496181133206-80ce9b88a853?auto=format&fit=crop&w=600&q=80', inStock: true, tags: ['business'] },
+      { id: 10, title: 'AirPods Pro 2 (USB-C)', brand: 'Apple', category: 'Наушники', price: 2777000, oldPrice: 3599000, rating: 4.9, reviews: 5234, store: 'Mediapark', storeIcon: '🇺🇿', image: 'https://images.unsplash.com/photo-1600294037681-c80b4cb5b434?auto=format&fit=crop&w=600&q=80', inStock: true, tags: ['tws', 'anc'] },
+      { id: 11, title: 'AirPods Pro 2 (iSpace)', brand: 'Apple', category: 'Наушники', price: 3080000, oldPrice: 3599000, rating: 4.9, reviews: 3421, store: 'iSpace.uz', storeIcon: '🇺🇿', image: 'https://images.unsplash.com/photo-1600294037681-c80b4cb5b434?auto=format&fit=crop&w=600&q=80', inStock: true, tags: ['tws', 'anc'] },
+      { id: 12, title: 'Sony WH-1000XM5', brand: 'Sony', category: 'Наушники', price: 3890000, oldPrice: 4750000, rating: 4.8, reviews: 3421, store: 'Amazon Global', storeIcon: '🇺🇸', image: 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=600&q=80', inStock: true, tags: ['anc', 'over-ear'] },
+      { id: 13, title: 'Apple Watch Series 11 46mm', brand: 'Apple', category: 'Часы', price: 4999000, oldPrice: 5990000, rating: 4.8, reviews: 876, store: 'Asaxiy', storeIcon: '🇺🇿', image: 'https://images.unsplash.com/photo-1546868871-7041f2a55e12?auto=format&fit=crop&w=600&q=80', inStock: true, tags: ['smartwatch'] },
+      { id: 14, title: 'Honor Choice Watch 2i', brand: 'Honor', category: 'Часы', price: 699000, oldPrice: 899000, rating: 4.5, reviews: 654, store: 'Asaxiy', storeIcon: '🇺🇿', image: 'https://images.unsplash.com/photo-1546868871-7041f2a55e12?auto=format&fit=crop&w=600&q=80', inStock: true, tags: ['budget'] },
+      { id: 15, title: 'DeLonghi Magnifica S ECAM 22.110.B', brand: 'DeLonghi', category: 'Техника для дома', price: 4150000, oldPrice: 4999000, rating: 5.0, reviews: 9, store: 'Uzum Market', storeIcon: '🇺🇿', image: 'https://images.unsplash.com/photo-1517668808822-9ebb02f2a0e6?auto=format&fit=crop&w=600&q=80', inStock: true, tags: ['coffee'] },
+      { id: 16, title: 'Холодильник 290л No Frost', brand: 'Samsung', category: 'Техника для дома', price: 6890000, oldPrice: 7990000, rating: 4.6, reviews: 15, store: 'Texnomart', storeIcon: '🇺🇿', image: 'https://images.unsplash.com/photo-1571175443880-49e1d25b2bc5?auto=format&fit=crop&w=600&q=80', inStock: true, tags: ['fridge'] },
+      { id: 17, title: 'Кондиционер инверторный 32м²', brand: 'Artel', category: 'Техника для дома', price: 6499000, oldPrice: 7499000, rating: 4.5, reviews: 8, store: 'Texnomart', storeIcon: '🇺🇿', image: 'https://images.unsplash.com/photo-1585771724684-38269d6639fd?auto=format&fit=crop&w=600&q=80', inStock: true, tags: ['ac'] },
+      { id: 18, title: 'Микроволновка 1000Вт', brand: 'Samsung', category: 'Техника для дома', price: 1568000, oldPrice: 1890000, rating: 4.4, reviews: 12, store: 'Texnomart', storeIcon: '🇺🇿', image: 'https://images.unsplash.com/photo-1574269909862-7e1d70bb8078?auto=format&fit=crop&w=600&q=80', inStock: true, tags: ['microwave'] },
+      { id: 19, title: 'Телевизор 43" Smart TV', brand: 'LG', category: 'ТВ и видео', price: 3844000, oldPrice: 4490000, rating: 4.6, reviews: 23, store: 'Texnomart', storeIcon: '🇺🇿', image: 'https://images.unsplash.com/photo-1593359677879-a4bb92f829d1?auto=format&fit=crop&w=600&q=80', inStock: true, tags: ['tv'] },
+      { id: 20, title: 'Плита газовая 4 конфорки', brand: 'Artel', category: 'Техника для дома', price: 7293000, oldPrice: 8290000, rating: 4.5, reviews: 6, store: 'Texnomart', storeIcon: '🇺🇿', image: 'https://images.unsplash.com/photo-1556911220-bff31c812dba?auto=format&fit=crop&w=600&q=80', inStock: true, tags: ['stove'] },
+      { id: 21, title: 'HP LaserJet Pro M404dn', brand: 'HP', category: 'Принтеры', price: 3890000, oldPrice: 4590000, rating: 4.6, reviews: 432, store: 'Texnomart', storeIcon: '🇺🇿', image: 'https://images.unsplash.com/photo-1612815154858-60aa4c59eaa6?auto=format&fit=crop&w=600&q=80', inStock: true, tags: ['laser', 'office'] },
+      { id: 22, title: 'Epson EcoTank L3250 Wi-Fi', brand: 'Epson', category: 'Принтеры', price: 2490000, oldPrice: 2990000, rating: 4.7, reviews: 876, store: 'Uzum Market', storeIcon: '🇺🇿', image: 'https://images.unsplash.com/photo-1612815154858-60aa4c59eaa6?auto=format&fit=crop&w=600&q=80', inStock: true, tags: ['inktank'] },
+      { id: 23, title: 'Canon PIXMA G3420', brand: 'Canon', category: 'Принтеры', price: 1990000, oldPrice: 2390000, rating: 4.5, reviews: 543, store: 'Olcha.uz', storeIcon: '🇺🇿', image: 'https://images.unsplash.com/photo-1612815154858-60aa4c59eaa6?auto=format&fit=crop&w=600&q=80', inStock: true, tags: ['inktank'] },
+      { id: 24, title: 'Nike Air Max 270 React', brand: 'Nike', category: 'Кроссовки', price: 1290000, oldPrice: 1690000, rating: 4.7, reviews: 2341, store: 'Uzum Market', storeIcon: '🇺🇿', image: 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&w=600&q=80', inStock: true, tags: ['running'] },
+      { id: 25, title: 'Универсальные кроссовки 35-44', brand: 'NoName', category: 'Кроссовки', price: 109000, oldPrice: 499000, rating: 4.8, reviews: 371, store: 'Uzum Market', storeIcon: '🇺🇿', image: 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&w=600&q=80', inStock: true, tags: ['budget'] },
+      { id: 26, title: 'The North Face Nuptse 700', brand: 'The North Face', category: 'Одежда', price: 3890000, oldPrice: 4590000, rating: 4.8, reviews: 654, store: 'Wildberries', storeIcon: '🌍', image: 'https://images.unsplash.com/photo-1551028719-00167b16eac5?auto=format&fit=crop&w=600&q=80', inStock: true, tags: ['winter', 'jacket'] },
+      { id: 27, title: 'Женские угги утеплённые 36-41', brand: 'NoName', category: 'Одежда', price: 139000, oldPrice: 499000, rating: 5.0, reviews: 2, store: 'Uzum Market', storeIcon: '🇺🇿', image: 'https://images.unsplash.com/photo-1608256246200-53e635b5b65f?auto=format&fit=crop&w=600&q=80', inStock: true, tags: ['winter'] },
+      { id: 28, title: 'PlayStation 5 Slim Digital', brand: 'Sony', category: 'Гейминг', price: 7990000, oldPrice: 9490000, rating: 4.9, reviews: 3421, store: 'Uzum Market', storeIcon: '🇺🇿', image: 'https://images.unsplash.com/photo-1606813907291-d86efa9b94db?auto=format&fit=crop&w=600&q=80', inStock: true, tags: ['console'] },
+      { id: 29, title: 'Xbox Series X 1TB', brand: 'Microsoft', category: 'Гейминг', price: 6890000, oldPrice: 7990000, rating: 4.8, reviews: 1876, store: 'Texnomart', storeIcon: '🇺🇿', image: 'https://images.unsplash.com/photo-1621259182978-fbf93132d53d?auto=format&fit=crop&w=600&q=80', inStock: true, tags: ['console'] },
+      { id: 30, title: 'Logitech G Pro X Superlight', brand: 'Logitech', category: 'Гейминг', price: 1290000, oldPrice: 1590000, rating: 4.8, reviews: 1234, store: 'Amazon Global', storeIcon: '🇺🇸', image: 'https://images.unsplash.com/photo-1527864550417-7fd91fc51a46?auto=format&fit=crop&w=600&q=80', inStock: true, tags: ['mouse'] },
+      { id: 31, title: 'Магнитный чехол Baseus iPhone 15 Pro', brand: 'Baseus', category: 'Аксессуары', price: 181300, oldPrice: 185000, rating: 4.5, reviews: 234, store: 'Uzum Market', storeIcon: '🇺🇿', image: 'https://images.unsplash.com/photo-1609091839311-d5365f9ff1c5?auto=format&fit=crop&w=600&q=80', inStock: true, tags: ['case'] },
+      { id: 32, title: 'Anker 737 Power Bank 24000mAh', brand: 'Anker', category: 'Аксессуары', price: 1290000, oldPrice: 1590000, rating: 4.8, reviews: 1876, store: 'Amazon Global', storeIcon: '🇺🇸', image: 'https://images.unsplash.com/photo-1609091839311-d5365f9ff1c5?auto=format&fit=crop&w=600&q=80', inStock: true, tags: ['charging'] },
+      { id: 33, title: 'Logitech MX Master 3S', brand: 'Logitech', category: 'Аксессуары', price: 990000, oldPrice: 1290000, rating: 4.9, reviews: 2341, store: 'Uzum Market', storeIcon: '🇺🇿', image: 'https://images.unsplash.com/photo-1527864550417-7fd91fc51a46?auto=format&fit=crop&w=600&q=80', inStock: true, tags: ['mouse'] },
+      { id: 34, title: 'Samsung T7 Shield 2TB SSD', brand: 'Samsung', category: 'Аксессуары', price: 1890000, oldPrice: 2290000, rating: 4.8, reviews: 876, store: 'Olcha.uz', storeIcon: '🇺🇿', image: 'https://images.unsplash.com/photo-1531492746076-161ca9bcad58?auto=format&fit=crop&w=600&q=80', inStock: true, tags: ['storage'] },
+      { id: 35, title: 'Sony Alpha A7 IV Body', brand: 'Sony', category: 'Фото и видео', price: 21900000, oldPrice: 24900000, rating: 4.9, reviews: 543, store: 'Asaxiy', storeIcon: '🇺🇿', image: 'https://images.unsplash.com/photo-1516035069371-29a1b244cc32?auto=format&fit=crop&w=600&q=80', inStock: true, tags: ['mirrorless'] },
+      { id: 36, title: 'DJI Mini 4 Pro Fly More', brand: 'DJI', category: 'Фото и видео', price: 12900000, oldPrice: 14900000, rating: 4.8, reviews: 876, store: 'Amazon Global', storeIcon: '🇺🇸', image: 'https://images.unsplash.com/photo-1473968512647-3e447244af8f?auto=format&fit=crop&w=600&q=80', inStock: true, tags: ['drone'] },
+      { id: 37, title: 'Бескаркасный диван-кровать Teddy 3в1', brand: 'NoName', category: 'Техника для дома', price: 2285000, oldPrice: 4250000, rating: 4.8, reviews: 107, store: 'Uzum Market', storeIcon: '🇺🇿', image: 'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?auto=format&fit=crop&w=600&q=80', inStock: true, tags: ['furniture'] },
+      { id: 38, title: 'Гитара акустическая QLT 38"', brand: 'QLT', category: 'Аксессуары', price: 307120, oldPrice: 499000, rating: 4.7, reviews: 177, store: 'Uzum Market', storeIcon: '🇺🇿', image: 'https://images.unsplash.com/photo-1516924962500-2b4b3b99ea02?auto=format&fit=crop&w=600&q=80', inStock: true, tags: ['music'] },
+      { id: 39, title: 'Комплект постельного белья эко-бамбук', brand: 'NoName', category: 'Техника для дома', price: 114740, oldPrice: 119000, rating: 4.2, reviews: 590, store: 'Uzum Market', storeIcon: '🇺🇿', image: 'https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?auto=format&fit=crop&w=600&q=80', inStock: true, tags: ['home'] },
+      { id: 40, title: 'Умная Робот Собака D11', brand: 'NoName', category: 'Аксессуары', price: 484010, oldPrice: 999000, rating: 4.7, reviews: 21, store: 'Uzum Market', storeIcon: '🇺🇿', image: 'https://images.unsplash.com/photo-1587300003388-59208cc962cb?auto=format&fit=crop&w=600&q=80', inStock: true, tags: ['toy'] },
+      { id: 41, title: 'Увлажнитель воздуха 4л с пультом', brand: 'NoName', category: 'Техника для дома', price: 355410, oldPrice: 359000, rating: 3.5, reviews: 4, store: 'Uzum Market', storeIcon: '🇺🇿', image: 'https://images.unsplash.com/photo-1585771724684-38269d6639fd?auto=format&fit=crop&w=600&q=80', inStock: true, tags: ['home'] },
+      { id: 42, title: 'Триммер для стрижки 4 насадки', brand: 'NoName', category: 'Аксессуары', price: 167040, oldPrice: 174000, rating: 4.6, reviews: 10, store: 'Uzum Market', storeIcon: '🇺🇿', image: 'https://images.unsplash.com/photo-1621607512214-68297480165e?auto=format&fit=crop&w=600&q=80', inStock: true, tags: ['grooming'] },
+      { id: 43, title: 'Зарядка для электромобиля GB/T 3.5кВт', brand: 'ROMADA', category: 'Аксессуары', price: 758637, oldPrice: 782100, rating: 4.5, reviews: 17, store: 'Uzum Market', storeIcon: '🇺🇿', image: 'https://images.unsplash.com/photo-1593941707882-a5bba14938c7?auto=format&fit=crop&w=600&q=80', inStock: true, tags: ['ev'] },
+      { id: 44, title: 'Ланчбокс с подогревом 0.9л 220В', brand: 'NoName', category: 'Аксессуары', price: 138240, oldPrice: 144000, rating: 4.8, reviews: 43, store: 'Uzum Market', storeIcon: '🇺🇿', image: 'https://images.unsplash.com/photo-1609091839311-d5365f9ff1c5?auto=format&fit=crop&w=600&q=80', inStock: true, tags: ['kitchen'] },
+      { id: 45, title: 'Массажер для шеи и плеч с подогревом', brand: 'NoName', category: 'Аксессуары', price: 217280, oldPrice: 224000, rating: 4.7, reviews: 55, store: 'Uzum Market', storeIcon: '🇺🇿', image: 'https://images.unsplash.com/photo-1544161515-4ab6ce6db874?auto=format&fit=crop&w=600&q=80', inStock: true, tags: ['massage'] },
+      { id: 46, title: 'Ноутбук iTech Technique 8/128 14"', brand: 'iTech', category: 'Ноутбуки', price: 2276000, oldPrice: 2299000, rating: 5.0, reviews: 1, store: 'Uzum Market', storeIcon: '🇺🇿', image: 'https://images.unsplash.com/photo-1496181133206-80ce9b88a853?auto=format&fit=crop&w=600&q=80', inStock: true, tags: ['budget'] },
+      { id: 47, title: 'Тёплые зимние носки 3-5-10 пар', brand: 'NoName', category: 'Одежда', price: 32900, oldPrice: 233000, rating: 5.0, reviews: 81, store: 'Uzum Market', storeIcon: '🇺🇿', image: 'https://images.unsplash.com/photo-1586350977771-b3b0abd50c82?auto=format&fit=crop&w=600&q=80', inStock: true, tags: ['winter'] },
+      { id: 48, title: 'Сушилка для белья настенная выдвижная', brand: 'NoName', category: 'Техника для дома', price: 157410, oldPrice: 159000, rating: 5.0, reviews: 3, store: 'Uzum Market', storeIcon: '🇺🇿', image: 'https://images.unsplash.com/photo-1582735689369-4fe89db7114c?auto=format&fit=crop&w=600&q=80', inStock: true, tags: ['home'] },
+      { id: 49, title: 'Диатомитовый коврик для ванной', brand: 'NoName', category: 'Техника для дома', price: 60800, oldPrice: 64000, rating: 4.4, reviews: 28, store: 'Uzum Market', storeIcon: '🇺🇿', image: 'https://images.unsplash.com/photo-1584622650111-993a426fbf0a?auto=format&fit=crop&w=600&q=80', inStock: true, tags: ['bath'] },
+      { id: 50, title: 'Миноксидил Kirkland 5% 60мл', brand: 'Kirkland', category: 'Аксессуары', price: 163050, oldPrice: 718000, rating: 4.8, reviews: 2483, store: 'Uzum Market', storeIcon: '🇺🇿', image: 'https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?auto=format&fit=crop&w=600&q=80', inStock: true, tags: ['health'] },
+      { id: 51, title: 'Samsung Galaxy Buds2 Pro', brand: 'Samsung', category: 'Наушники', price: 1890000, oldPrice: 2290000, rating: 4.7, reviews: 1654, store: 'Olcha.uz', storeIcon: '🇺🇿', image: 'https://images.unsplash.com/photo-1600294037681-c80b4cb5b434?auto=format&fit=crop&w=600&q=80', inStock: true, tags: ['tws'] },
+      { id: 52, title: 'JBL Tune 770NC', brand: 'JBL', category: 'Наушники', price: 1290000, oldPrice: 1590000, rating: 4.6, reviews: 876, store: 'Alif Shop', storeIcon: '🇺🇿', image: 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=600&q=80', inStock: true, tags: ['anc'] },
+      { id: 53, title: 'Dyson V15 Detect Absolute', brand: 'Dyson', category: 'Техника для дома', price: 8990000, oldPrice: 10500000, rating: 4.8, reviews: 1234, store: 'Uzum Market', storeIcon: '🇺🇿', image: 'https://images.unsplash.com/photo-1558317374-067fb5f30001?auto=format&fit=crop&w=600&q=80', inStock: true, tags: ['vacuum'] },
+      { id: 54, title: 'LG OLED C3 55" 4K TV', brand: 'LG', category: 'ТВ и видео', price: 15900000, oldPrice: 18900000, rating: 4.9, reviews: 654, store: 'Texnomart', storeIcon: '🇺🇿', image: 'https://images.unsplash.com/photo-1593359677879-a4bb92f829d1?auto=format&fit=crop&w=600&q=80', inStock: true, tags: ['oled'] },
+      { id: 55, title: 'Nintendo Switch OLED', brand: 'Nintendo', category: 'Гейминг', price: 4290000, oldPrice: 4990000, rating: 4.8, reviews: 2341, store: 'Amazon Global', storeIcon: '🇺🇸', image: 'https://images.unsplash.com/photo-1606813907291-d86efa9b94db?auto=format&fit=crop&w=600&q=80', inStock: true, tags: ['console', 'portable'] },
+      { id: 56, title: 'Canon EOS R6 Mark II', brand: 'Canon', category: 'Фото и видео', price: 23900000, oldPrice: 26900000, rating: 4.8, reviews: 321, store: 'Amazon Global', storeIcon: '🇺🇸', image: 'https://images.unsplash.com/photo-1516035069371-29a1b244cc32?auto=format&fit=crop&w=600&q=80', inStock: true, tags: ['mirrorless'] },
+      { id: 57, title: 'Keychron K8 Pro Wireless', brand: 'Keychron', category: 'Аксессуары', price: 1090000, oldPrice: 1390000, rating: 4.7, reviews: 654, store: 'AliExpress', storeIcon: '🇨🇳', image: 'https://images.unsplash.com/photo-1587829741301-dc798b83add3?auto=format&fit=crop&w=600&q=80', inStock: true, tags: ['keyboard'] },
+      { id: 58, title: 'UGREEN Nexode 100W GaN Charger', brand: 'UGREEN', category: 'Аксессуары', price: 490000, oldPrice: 690000, rating: 4.7, reviews: 1234, store: 'AliExpress', storeIcon: '🇨🇳', image: 'https://images.unsplash.com/photo-1609091839311-d5365f9ff1c5?auto=format&fit=crop&w=600&q=80', inStock: true, tags: ['charging'] },
+      { id: 59, title: 'Adidas Ultraboost 22', brand: 'Adidas', category: 'Кроссовки', price: 1490000, oldPrice: 1890000, rating: 4.8, reviews: 1876, store: 'Trendyol', storeIcon: '🇹🇷', image: 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&w=600&q=80', inStock: true, tags: ['running'] },
+      { id: 60, title: 'Zara Oversized Wool Coat', brand: 'Zara', category: 'Одежда', price: 2190000, oldPrice: 2790000, rating: 4.5, reviews: 432, store: 'Trendyol', storeIcon: '🇹🇷', image: 'https://images.unsplash.com/photo-1539533018447-63fcce2678e3?auto=format&fit=crop&w=600&q=80', inStock: true, tags: ['coat'] },
+    ];
+
+    const CATEGORIES = [
+      { name: 'Смартфоны', icon: 'smartphone' }, { name: 'Ноутбуки', icon: 'laptop' },
+      { name: 'Наушники', icon: 'headphones' }, { name: 'Принтеры', icon: 'printer' },
+      { name: 'Кроссовки', icon: 'footprints' }, { name: 'Одежда', icon: 'shirt' },
+      { name: 'Техника для дома', icon: 'home' }, { name: 'ТВ и видео', icon: 'tv' },
+      { name: 'Гейминг', icon: 'gamepad-2' }, { name: 'Часы', icon: 'watch' },
+      { name: 'Фото и видео', icon: 'camera' }, { name: 'Аксессуары', icon: 'package' },
+    ];
+
+    function init() {
+      lucide.createIcons(); populateCategoryHub('homeCategoryHub'); populateFilters(); populateTrackSelect();
+      renderFaq(); updateBadges(); renderDashboard(); updateMouseGlow();
+    }
+
+    function populateCategoryHub(containerId) {
+      const el = document.getElementById(containerId); if (!el) return;
+      el.innerHTML = CATEGORIES.map(c => `<div class="category-hub-card" onclick="selectCategoryAndShowBest('${c.name}')"><div class="category-hub-icon"><i data-lucide="${c.icon}" width="22" height="22"></i></div><div style="font-weight:600; font-size:0.9rem;">${c.name}</div></div>`).join('');
+      lucide.createIcons();
+    }
+
+    function populateFilters() {
+      const brandSelect = document.getElementById('filterBrand');
+      const brands = [...new Set(PRODUCTS.map(p => p.brand))].sort();
+      brands.forEach(b => { const opt = document.createElement('option'); opt.value = b; opt.textContent = b; brandSelect.appendChild(opt); });
+      const catSelect = document.getElementById('filterCategory');
+      CATEGORIES.forEach(c => { const opt = document.createElement('option'); opt.value = c.name; opt.textContent = c.name; catSelect.appendChild(opt); });
+      const storeSelect = document.getElementById('filterStore');
+      const stores = [...new Set(PRODUCTS.map(p => p.store))];
+      stores.forEach(s => { const opt = document.createElement('option'); opt.value = s; opt.textContent = s; storeSelect.appendChild(opt); });
+    }
+
+    function populateTrackSelect() {
+      const sel = document.getElementById('trackProductSelect'); if (!sel) return;
+      sel.innerHTML = PRODUCTS.slice(0, 25).map(p => `<option value="${p.id}">${p.title} — ${formatPrice(p.price)}</option>`).join('');
+    }
+
+    function selectCategoryAndShowBest(cat) {
+      currentCategory = cat; navigateTo('results');
+      document.getElementById('filterCategory').value = cat === 'all' ? 'all' : cat;
+      document.getElementById('categorySelectedHint').textContent = `Категория: ${cat}`;
+      document.getElementById('searchContextLabel').textContent = `Показаны лучшие AI-варианты в категории «${cat}» с минимальной ценой и высоким рейтингом.`;
+      applyFilters();
+    }
+
+    function executeTextSearch() { const q = document.getElementById('homeSearchInput').value.trim(); if (!q) { showToast('Введите запрос'); return; } quickSearch(q); }
+    function quickSearch(q) { navigateTo('results'); document.getElementById('catalogSearchInput').value = q; document.getElementById('filterCategory').value = ''; currentCategory = 'all'; document.getElementById('searchContextLabel').textContent = `Результаты поиска: «${q}»`; applyFilters(); }
+    function clearHomeSearch() { document.getElementById('homeSearchInput').value = ''; }
+
+    function applyFilters() {
+      const q = (document.getElementById('catalogSearchInput').value || '').toLowerCase();
+      const cat = document.getElementById('filterCategory').value;
+      const minP = parseFloat(document.getElementById('filterMinPrice').value) || 0;
+      const maxP = parseFloat(document.getElementById('filterMaxPrice').value) || Infinity;
+      const brand = document.getElementById('filterBrand').value;
+      const store = document.getElementById('filterStore').value;
+      const discountOnly = document.getElementById('filterDiscountOnly').checked;
+      const inStockOnly = document.getElementById('filterInStock').checked;
+      let filtered = PRODUCTS.filter(p => {
+        if (q && !(p.title.toLowerCase().includes(q) || p.brand.toLowerCase().includes(q))) return false;
+        if (cat && cat !== 'all' && p.category !== cat) return false;
+        if (p.price < minP || p.price > maxP) return false;
+        if (brand !== 'all' && p.brand !== brand) return false;
+        if (store !== 'all' && p.store !== store) return false;
+        if (discountOnly) { const disc = (p.oldPrice - p.price) / p.oldPrice * 100; if (disc < 15) return false; }
+        if (inStockOnly && !p.inStock) return false;
+        return true;
+      });
+      const sort = document.getElementById('sortSelect').value;
+      if (sort === 'price_asc') filtered.sort((a, b) => a.price - b.price);
+      else if (sort === 'price_desc') filtered.sort((a, b) => b.price - a.price);
+      else if (sort === 'rating_desc') filtered.sort((a, b) => b.rating - a.rating);
+      else if (sort === 'discount_desc') filtered.sort((a, b) => ((b.oldPrice - b.price) / b.oldPrice) - ((a.oldPrice - a.price) / a.oldPrice));
+      else filtered.sort((a, b) => (b.rating * b.reviews) - (a.rating * a.reviews));
+      currentProducts = filtered;
+      document.getElementById('resultsCountText').textContent = `Найдено: ${filtered.length} товаров`;
+      renderProducts(filtered.slice(0, visibleCount), 'productsGrid');
+      document.getElementById('loadMoreWrap').style.display = filtered.length > visibleCount ? 'block' : 'none';
+    }
+
+    function loadMoreProducts() { visibleCount += 16; renderProducts(currentProducts.slice(0, visibleCount), 'productsGrid'); if (visibleCount >= currentProducts.length) document.getElementById('loadMoreWrap').style.display = 'none'; }
+    function resetFilters() { document.getElementById('catalogSearchInput').value = ''; document.getElementById('filterCategory').value = ''; document.getElementById('filterMinPrice').value = ''; document.getElementById('filterMaxPrice').value = ''; document.getElementById('filterBrand').value = 'all'; document.getElementById('filterStore').value = 'all'; document.getElementById('filterDiscountOnly').checked = false; document.getElementById('filterInStock').checked = true; applyFilters(); }
+
+    function renderProducts(list, containerId) {
+      const grid = document.getElementById(containerId); if (!grid) return;
+      if (!list.length) { grid.innerHTML = '<div style="grid-column:1/-1; text-align:center; padding:40px; color:var(--text-muted);"><i data-lucide="search-x" width="48" height="48" style="margin:0 auto 12px; display:block;"></i>Ничего не найдено.</div>'; lucide.createIcons(); return; }
+      grid.innerHTML = list.map(p => productCardHTML(p)).join(''); lucide.createIcons();
+    }
+
+    function productCardHTML(p) {
+      const discount = Math.round((p.oldPrice - p.price) / p.oldPrice * 100);
+      const isFav = favorites.includes(p.id);
+      return `<div class="glass-card product-card"><div class="product-thumb-wrap" onclick="openProduct(${p.id})" style="cursor:pointer;"><img src="${p.image}" alt="${p.title}" class="product-thumb" loading="lazy" onerror="this.src='https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=600&q=80'" />${discount > 0 ? `<span class="discount-tag">-${discount}%</span>` : ''}<div class="card-top-actions"><button class="btn-icon" style="width:32px; height:32px;" onclick="event.stopPropagation(); toggleFavorite(${p.id})"><i data-lucide="heart" width="14" height="14" ${isFav ? 'fill="var(--emerald-primary)" stroke="var(--emerald-primary)"' : ''}></i></button></div></div><div class="product-body"><div class="product-brand">${p.brand}</div><div class="product-title" onclick="openProduct(${p.id})" style="cursor:pointer;">${p.title}</div><div class="product-meta"><span><i data-lucide="star" width="12" height="12" style="fill:var(--amber-accent); color:var(--amber-accent); vertical-align:middle;"></i> ${p.rating} (${p.reviews.toLocaleString('ru-RU')})</span><span class="store-badge">${p.storeIcon} ${p.store}</span></div><div class="price-block"><div class="old-price">${formatPrice(p.oldPrice)}</div><div class="current-price">${formatPrice(p.price)}</div></div><div class="card-footer-btns"><button class="btn btn-primary btn-sm" onclick="addToCart(${p.id})"><i data-lucide="shopping-cart" width="14" height="14"></i> В корзину</button><button class="btn btn-outline-emerald btn-sm" onclick="openProduct(${p.id})"><i data-lucide="eye" width="14" height="14"></i></button></div></div></div>`;
+    }
+
+    function toggleFavorite(id) { const idx = favorites.indexOf(id); if (idx > -1) { favorites.splice(idx, 1); showToast('Удалено из избранного'); } else { favorites.push(id); showToast('Добавлено в избранное ❤️'); } localStorage.setItem('tejam_favorites', JSON.stringify(favorites)); updateBadges(); if (currentView === 'favorites') renderFavorites(); if (currentProducts.length) applyFilters(); }
+
+    function renderFavorites() { const el = document.getElementById('favoritesContainer'); const favProducts = PRODUCTS.filter(p => favorites.includes(p.id)); if (!favProducts.length) { el.innerHTML = '<div style="grid-column:1/-1; text-align:center; padding:40px; color:var(--text-muted);"><i data-lucide="heart-off" width="48" height="48" style="margin:0 auto 12px; display:block;"></i>Нет избранных товаров</div>'; lucide.createIcons(); return; } renderProducts(favProducts, 'favoritesContainer'); }
+
+    function addToCart(id) { const existing = cart.find(c => c.id === id); if (existing) existing.qty++; else cart.push({ id, qty: 1 }); localStorage.setItem('tejam_cart', JSON.stringify(cart)); updateBadges(); showToast('Добавлено в корзину 🛒'); }
+
+    function renderCart() {
+      const el = document.getElementById('cartContainer');
+      if (!cart.length) { el.innerHTML = '<div class="glass-card" style="padding:60px; text-align:center; color:var(--text-muted);"><i data-lucide="shopping-cart" width="64" height="64" style="margin:0 auto 16px; display:block;"></i><h3 style="margin-bottom:8px;">Корзина пуста</h3><p>Добавьте товары из каталога</p></div>'; lucide.createIcons(); return; }
+      const items = cart.map(c => ({ ...PRODUCTS.find(p => p.id === c.id), qty: c.qty })).filter(Boolean);
+      const subtotal = items.reduce((s, i) => s + i.price * i.qty, 0);
+      const originalTotal = items.reduce((s, i) => s + i.oldPrice * i.qty, 0);
+      const savings = originalTotal - subtotal;
+      el.innerHTML = `<div class="cart-layout"><div class="glass-card" style="padding:20px;">${items.map(i => `<div class="cart-item"><img src="${i.image}" style="width:80px; height:80px; border-radius:10px; object-fit:cover;" onerror="this.src='https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=200&q=80'" /><div style="flex:1;"><div style="font-weight:700; font-size:0.95rem;">${i.title}</div><div style="font-size:0.82rem; color:var(--text-secondary);">${i.brand} • ${i.store}</div><div style="color:var(--emerald-primary); font-weight:700; margin-top:4px;">${formatPrice(i.price)}</div></div><div class="qty-control"><button onclick="changeQty(${i.id}, -1)" style="font-weight:700;">−</button><span style="min-width:20px; text-align:center;">${i.qty}</span><button onclick="changeQty(${i.id}, 1)" style="font-weight:700;">+</button></div><button class="btn-icon" onclick="removeFromCart(${i.id})"><i data-lucide="trash-2" width="16" height="16"></i></button></div>`).join('')}</div><div class="glass-card" style="padding:24px; position:sticky; top:92px;"><h3 style="margin-bottom:16px;">Итого</h3><div style="display:flex; justify-content:space-between; margin-bottom:10px; font-size:0.9rem;"><span style="color:var(--text-secondary);">Товаров:</span><span>${items.reduce((s, i) => s + i.qty, 0)} шт.</span></div><div style="display:flex; justify-content:space-between; margin-bottom:10px; font-size:0.9rem;"><span style="color:var(--text-secondary);">Оригинальная цена:</span><span style="text-decoration:line-through; color:var(--text-muted);">${formatPrice(originalTotal)}</span></div><div style="display:flex; justify-content:space-between; margin-bottom:10px; font-size:0.9rem;"><span style="color:var(--emerald-primary);">Экономия:</span><span style="color:var(--emerald-primary); font-weight:700;">−${formatPrice(savings)}</span></div><div style="border-top:1px solid var(--border-color); padding-top:14px; margin-top:14px; display:flex; justify-content:space-between; font-size:1.15rem; font-weight:800;"><span>К оплате:</span><span style="color:var(--emerald-primary);">${formatPrice(subtotal)}</span></div><button class="btn btn-primary" style="width:100%; margin-top:16px;" onclick="showToast('Переход к оформлению')"><i data-lucide="credit-card" width="18" height="18"></i> Оформить заказ</button></div></div>`;
+      lucide.createIcons();
+    }
+
+    function changeQty(id, delta) { const item = cart.find(c => c.id === id); if (!item) return; item.qty += delta; if (item.qty <= 0) cart = cart.filter(c => c.id !== id); localStorage.setItem('tejam_cart', JSON.stringify(cart)); updateBadges(); renderCart(); }
+    function removeFromCart(id) { cart = cart.filter(c => c.id !== id); localStorage.setItem('tejam_cart', JSON.stringify(cart)); updateBadges(); renderCart(); showToast('Удалено из корзины'); }
+
+    function updateBadges() { document.getElementById('favBadge').textContent = favorites.length; document.getElementById('cartBadge').textContent = cart.reduce((s, c) => s + c.qty, 0); }
+
+    function openProduct(id) {
+      const p = PRODUCTS.find(x => x.id === id); if (!p) return; navigateTo('product');
+      const discount = Math.round((p.oldPrice - p.price) / p.oldPrice * 100);
+      const container = document.getElementById('productDetailContainer');
+      container.innerHTML = `<div style="margin-bottom:20px;"><button class="btn btn-secondary btn-sm" onclick="navigateTo('results')"><i data-lucide="arrow-left" width="16" height="16"></i> Назад к поиску</button></div><div class="product-detail-grid"><div class="glass-card detail-gallery"><img src="${p.image}" alt="${p.title}" onerror="this.src='https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=600&q=80'" /></div><div><div class="product-brand" style="margin-bottom:8px;">${p.brand}</div><h1 style="font-family:var(--font-display); font-size:1.85rem; margin-bottom:12px;">${p.title}</h1><div style="display:flex; align-items:center; gap:12px; margin-bottom:20px; flex-wrap:wrap;"><span style="color:var(--amber-accent);"><i data-lucide="star" width="16" height="16" style="fill:var(--amber-accent); vertical-align:middle;"></i> ${p.rating}</span><span style="color:var(--text-secondary); font-size:0.9rem;">${p.reviews.toLocaleString('ru-RU')} отзывов</span><span class="store-badge">${p.storeIcon} ${p.store}</span>${discount > 0 ? `<span class="discount-tag" style="position:static;">-${discount}%</span>` : ''}</div><div style="margin-bottom:20px;"><div style="font-size:0.85rem; color:var(--text-muted); text-decoration:line-through;">${formatPrice(p.oldPrice)}</div><div style="font-family:var(--font-display); font-size:2rem; font-weight:800; color:var(--emerald-primary);">${formatPrice(p.price)}</div><div style="font-size:0.85rem; color:var(--emerald-primary);">Экономия: ${formatPrice(p.oldPrice - p.price)}</div></div><div style="display:flex; gap:10px; margin-bottom:24px; flex-wrap:wrap;"><button class="btn btn-primary" onclick="addToCart(${p.id})"><i data-lucide="shopping-cart" width="18" height="18"></i> В корзину</button><button class="btn btn-outline-emerald" onclick="toggleFavorite(${p.id})"><i data-lucide="heart" width="18" height="18"></i> В избранное</button><button class="btn btn-secondary" onclick="showToast('Добавлено в трекинг')"><i data-lucide="bell" width="18" height="18"></i> Следить</button></div><div class="glass-card" style="padding:18px;"><h3 style="font-size:1.05rem; margin-bottom:12px;">Характеристики</h3><table class="specs-table"><tr><td>Бренд</td><td>${p.brand}</td></tr><tr><td>Категория</td><td>${p.category}</td></tr><tr><td>Магазин</td><td>${p.storeIcon} ${p.store}</td></tr><tr><td>Рейтинг</td><td>⭐ ${p.rating} / 5</td></tr><tr><td>Отзывы</td><td>${p.reviews.toLocaleString('ru-RU')}</td></tr><tr><td>Наличие</td><td style="color:var(--emerald-primary);">✓ В наличии</td></tr></table></div></div></div><div class="glass-card" style="padding:24px; margin-top:20px;"><h3 style="margin-bottom:16px;"><i data-lucide="message-square" width="18" height="18" style="vertical-align:middle; color:var(--emerald-primary);"></i> AI-анализ отзывов</h3><div style="background:rgba(0,214,160,0.08); border-radius:12px; padding:16px; display:flex; gap:12px;"><i data-lucide="bot" width="22" height="22" style="color:var(--emerald-primary); flex-shrink:0;"></i><div><strong>TejamAI:</strong> Проанализировано ${p.reviews.toLocaleString('ru-RU')} отзывов. Средняя оценка — ${p.rating}/5. Рекомендуем к покупке.</div></div></div>`;
+      lucide.createIcons(); window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function loadDefaultComparison() {
+      const items = PRODUCTS.filter(p => p.category === 'Смартфоны').slice(0, 3);
+      const verdict = document.getElementById('aiCompareVerdict');
+      verdict.innerHTML = `<div style="display:flex; gap:14px; align-items:flex-start;"><i data-lucide="bot" width="24" height="24" style="color:var(--emerald-primary); flex-shrink:0;"></i><div><strong style="font-size:1.05rem;">AI-вердикт:</strong><p style="color:var(--text-secondary); margin-top:6px;">Лучший выбор — <strong style="color:var(--emerald-primary);">${items[0].title}</strong> за ${formatPrice(items[0].price)}. Оптимальное соотношение цены и качества.</p></div></div>`;
+      const table = document.getElementById('compareTable');
+      table.innerHTML = `<thead><tr><th>Параметр</th>${items.map(i => `<th class="highlight-col">${i.title}</th>`).join('')}</tr></thead><tbody><tr><th>Изображение</th>${items.map(i => `<td><img src="${i.image}" style="width:100px; height:100px; border-radius:10px; object-fit:cover;" onerror="this.src='https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=200&q=80'" /></td>`).join('')}</tr><tr><th>Цена</th>${items.map(i => `<td><strong style="color:var(--emerald-primary);">${formatPrice(i.price)}</strong></td>`).join('')}</tr><tr><th>Бренд</th>${items.map(i => `<td>${i.brand}</td>`).join('')}</tr><tr><th>Рейтинг</th>${items.map(i => `<td>⭐ ${i.rating}</td>`).join('')}</tr><tr><th>Отзывы</th>${items.map(i => `<td>${i.reviews.toLocaleString('ru-RU')}</td>`).join('')}</tr><tr><th>Магазин</th>${items.map(i => `<td>${i.storeIcon} ${i.store}</td>`).join('')}</tr></tbody>`;
+      lucide.createIcons();
+    }
+
+    function initChat() { if (!chatHistory.length) { addChatMessage('ai', 'Привет! 👋 Я TejamAI — ваш AI-помощник по покупкам. Спросите меня о любом товаре, бюджете или помогу сравнить варианты. Что вас интересует?'); } }
+    function addChatMessage(role, text) { chatHistory.push({ role, text }); const container = document.getElementById('chatMessages'); if (!container) return; const div = document.createElement('div'); div.className = `msg-bubble msg-${role}`; div.innerHTML = text; container.appendChild(div); container.scrollTop = container.scrollHeight; }
+    function handleChatSubmit() { const input = document.getElementById('chatInput'); const q = input.value.trim(); if (!q) return; input.value = ''; addChatMessage('user', q); setTimeout(() => handleAssistantResponse(q), 600); }
+    function sendAssistantPrompt(q) { document.getElementById('chatInput').value = q; handleChatSubmit(); }
+
+    function handleAssistantResponse(q) {
+      const lower = q.toLowerCase(); let response = '';
+      if (lower.includes('airpod') || lower.includes('наушник')) { const p = PRODUCTS.find(p => p.title.includes('AirPods Pro 2')); response = `🎧 Рекомендую <strong>${p.title}</strong> за <strong>${formatPrice(p.price)}</strong> (скидка ${Math.round((p.oldPrice - p.price) / p.oldPrice * 100)}%). Это лучшая цена на Mediapark. Отличный выбор для iPhone!`; }
+      else if (lower.includes('ноутбук') || lower.includes('laptop') || lower.includes('программ')) { const p = PRODUCTS.find(p => p.title.includes('MacBook Air 15')); response = `💻 Для программирования советую <strong>${p.title}</strong> за <strong>${formatPrice(p.price)}</strong>. Чип M3, 18 ч автономности, идеален для веб-разработки.`; }
+      else if (lower.includes('iphone') || lower.includes('смартфон') || lower.includes('телефон')) { const p = PRODUCTS.find(p => p.title.includes('iPhone 15 Pro Max')); response = `📱 Топ-выбор — <strong>${p.title}</strong> за <strong>${formatPrice(p.price)}</strong>. Титан, камера 48 Мп, чип A17 Pro.`; }
+      else if (lower.includes('сейчас') || lower.includes('стоит')) { response = `📉 Согласно анализу 30+ маркетплейсов, <strong>сейчас хорошее время для покупок</strong>! Многие товары на минимальных ценах за 60 дней.`; }
+      else { const p = PRODUCTS[Math.floor(Math.random() * PRODUCTS.length)]; response = `🤖 Рекомендую обратить внимание на <strong>${p.title}</strong> за <strong>${formatPrice(p.price)}</strong> — рейтинг ${p.rating}/5 (${p.reviews.toLocaleString('ru-RU')} отзывов). Скидка ${Math.round((p.oldPrice - p.price) / p.oldPrice * 100)}%.`; }
+      addChatMessage('ai', response);
+    }
+
+    function resetChat() { chatHistory = []; document.getElementById('chatMessages').innerHTML = ''; initChat(); }
+
+    function addTrackedItem() { const sel = document.getElementById('trackProductSelect'); const priceInput = document.getElementById('trackTargetPriceInput'); const id = parseInt(sel.value); const target = parseFloat(priceInput.value); if (!target || target <= 0) { showToast('Введите целевую цену'); return; } const product = PRODUCTS.find(p => p.id === id); if (!product) return; if (trackedItems.find(t => t.id === id)) { showToast('Уже отслеживается'); return; } trackedItems.push({ id, targetPrice: target, currentPrice: product.price }); localStorage.setItem('tejam_tracked', JSON.stringify(trackedItems)); priceInput.value = ''; renderTracking(); showToast('Добавлено в отслеживание 🔔'); }
+
+    function renderTracking() {
+      const list = document.getElementById('trackedItemsList'); if (!list) return;
+      if (!trackedItems.length) { list.innerHTML = '<div class="glass-card" style="padding:40px; text-align:center; color:var(--text-muted);"><i data-lucide="bell-off" width="48" height="48" style="margin:0 auto 12px; display:block;"></i>Нет отслеживаемых товаров</div>'; }
+      else { list.innerHTML = trackedItems.map(t => { const p = PRODUCTS.find(x => x.id === t.id); if (!p) return ''; const progress = Math.min(100, Math.round(t.targetPrice / t.currentPrice * 100)); return `<div class="glass-card" style="padding:16px; display:flex; gap:14px; align-items:center;"><img src="${p.image}" style="width:64px; height:64px; border-radius:10px; object-fit:cover;" onerror="this.src='https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=200&q=80'" /><div style="flex:1;"><div style="font-weight:700; font-size:0.9rem;">${p.title}</div><div style="font-size:0.82rem; color:var(--text-secondary);">Целевая: ${formatPrice(t.targetPrice)} • Сейчас: <span style="color:var(--emerald-primary);">${formatPrice(p.price)}</span></div><div style="height:6px; background:rgba(255,255,255,0.1); border-radius:999px; margin-top:8px; overflow:hidden;"><div style="width:${progress}%; height:100%; background:linear-gradient(90deg,#00F0B5,#38BDF8);"></div></div></div><button class="btn-icon" onclick="removeTrackedItem(${t.id})"><i data-lucide="trash-2" width="16" height="16"></i></button></div>`; }).join(''); }
+      lucide.createIcons(); renderPriceChart();
+    }
+
+    function removeTrackedItem(id) { trackedItems = trackedItems.filter(t => t.id !== id); localStorage.setItem('tejam_tracked', JSON.stringify(trackedItems)); renderTracking(); }
+
+    function renderPriceChart() {
+      const ctx = document.getElementById('trackingPriceChart'); if (!ctx) return;
+      if (priceChartInstance) priceChartInstance.destroy();
+      const weeks = ['Нед 1', 'Нед 2', 'Нед 3', 'Нед 4', 'Нед 5', 'Нед 6'];
+      const baseData = trackedItems.length ? trackedItems[0].currentPrice : 15000000;
+      const data = [baseData * 1.15, baseData * 1.12, baseData * 1.08, baseData * 1.05, baseData * 1.02, baseData];
+      priceChartInstance = new Chart(ctx, { type: 'line', data: { labels: weeks, datasets: [{ label: 'Минимальная цена (сум)', data, borderColor: '#00F0B5', backgroundColor: 'rgba(0,240,181,0.12)', borderWidth: 3, fill: true, tension: 0.4, pointBackgroundColor: '#00F0B5', pointRadius: 5, pointHoverRadius: 7 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { labels: { color: '#94A3B8' } }, tooltip: { callbacks: { label: c => formatPrice(c.raw) } } }, scales: { x: { ticks: { color: '#64748B' }, grid: { color: 'rgba(255,255,255,0.05)' } }, y: { ticks: { color: '#64748B', callback: v => formatPrice(v) }, grid: { color: 'rgba(255,255,255,0.05)' } } } } });
+    }
+
+    function simulatePriceDrop() { showToast('📉 Проверка цен... Обнаружено 3 снижения!'); setTimeout(() => showToast('Sony WH-1000XM5 подешевел на 500 000 сум'), 800); setTimeout(() => showToast('AirPods Pro 2 — минимальная цена!'), 1600); }
+
+    function generateGiftRecommendations() {
+      const budget = parseFloat(document.getElementById('giftBudget').value) || 5000000;
+      const interest = document.getElementById('giftInterest').value;
+      let filtered = PRODUCTS.filter(p => p.price <= budget);
+      if (interest === 'tech') filtered = filtered.filter(p => ['Смартфоны', 'Ноутбуки', 'Наушники', 'Часы', 'Аксессуары'].includes(p.category));
+      else if (interest === 'gaming') filtered = filtered.filter(p => p.category === 'Гейминг');
+      else if (interest === 'sports') filtered = filtered.filter(p => p.category === 'Кроссовки');
+      else if (interest === 'home') filtered = filtered.filter(p => ['Техника для дома', 'ТВ и видео'].includes(p.category));
+      else if (interest === 'fashion') filtered = filtered.filter(p => p.category === 'Одежда' || p.category === 'Кроссовки');
+      filtered.sort((a, b) => b.rating - a.rating);
+      renderProducts(filtered.slice(0, 8), 'giftResultsGrid');
+      showToast(`Найдено ${filtered.length} подарков до ${formatPrice(budget)}`);
+    }
+
+    function renderDashboard() {
+      const kpis = [
+        { label: 'Сэкономлено', value: '2 460 000 сум', icon: 'piggy-bank', color: 'var(--emerald-primary)' },
+        { label: 'Отслеживается', value: trackedItems.length + ' товаров', icon: 'bell', color: 'var(--cyan-accent)' },
+        { label: 'В избранном', value: favorites.length + ' товаров', icon: 'heart', color: 'var(--pink-accent)' },
+        { label: 'В корзине', value: cart.reduce((s, c) => s + c.qty, 0) + ' шт.', icon: 'shopping-cart', color: 'var(--violet-accent)' },
+      ];
+      const kpiGrid = document.getElementById('dashboardKpis');
+      if (kpiGrid) { kpiGrid.innerHTML = kpis.map(k => `<div class="glass-card kpi-card"><i data-lucide="${k.icon}" width="24" height="24" style="color:${k.color};"></i><div class="kpi-value">${k.value}</div><div style="font-size:0.85rem; color:var(--text-secondary);">${k.label}</div></div>`).join(''); }
+      const trackedList = document.getElementById('dashboardTrackedList');
+      if (trackedList) { if (!trackedItems.length) trackedList.innerHTML = '<p style="color:var(--text-muted); font-size:0.9rem;">Нет отслеживаемых товаров</p>'; else trackedList.innerHTML = trackedItems.slice(0, 4).map(t => { const p = PRODUCTS.find(x => x.id === t.id); if (!p) return ''; return `<div style="display:flex; gap:12px; align-items:center; padding:10px 0; border-bottom:1px solid var(--border-color);"><img src="${p.image}" style="width:44px; height:44px; border-radius:8px; object-fit:cover;" /><div style="flex:1;"><div style="font-weight:600; font-size:0.88rem;">${p.title}</div><div style="font-size:0.8rem; color:var(--emerald-primary);">${formatPrice(p.price)}</div></div></div>`; }).join(''); }
+      const activity = document.getElementById('dashboardActivityFeed');
+      if (activity) { const items = [{ icon: 'trending-down', text: 'Цена на Sony WH-1000XM5 снизилась на 18%', time: '2 часа назад', color: 'var(--emerald-primary)' }, { icon: 'heart', text: 'Добавлено в избранное: AirPods Pro 2', time: '5 часов назад', color: 'var(--pink-accent)' }, { icon: 'bell', text: 'Уведомление: MacBook Air M3 достиг целевой цены', time: '1 день назад', color: 'var(--cyan-accent)' }]; activity.innerHTML = items.map(i => `<div style="display:flex; gap:12px; align-items:flex-start; padding:10px 0; border-bottom:1px solid var(--border-color);"><i data-lucide="${i.icon}" width="18" height="18" style="color:${i.color}; flex-shrink:0; margin-top:3px;"></i><div style="flex:1;"><div style="font-size:0.88rem;">${i.text}</div><div style="font-size:0.78rem; color:var(--text-muted);">${i.time}</div></div></div>`).join(''); }
+      lucide.createIcons();
+    }
+
+    function renderFaq() {
+      const faqs = [{ q: 'Что такое TejamAI?', a: 'TejamAI — это AI-платформа умного шопинга, которая агрегирует данные с 30+ маркетплейсов, анализирует отзывы и помогает находить лучшие цены за секунды.' }, { q: 'Как работает поиск по фотографии?', a: 'Загрузите фото товара или сфотографируйте его камерой. AI Vision распознает категорию и характеристики, после чего TejamAI найдёт аналоги по всем маркетплейсам.' }, { q: 'TejamAI — это магазин?', a: 'Нет, TejamAI — это агрегатор. Мы не продаём товары напрямую. Мы показываем лучшие предложения и перенаправляем вас в официальный магазин.' }, { q: 'Как работает отслеживание цен?', a: 'Установите целевую цену на товар — TejamAI будет мониторить все площадки и пришлёт уведомление, когда цена опустится до нужного уровня.' }, { q: 'Какие маркетплейсы подключены?', a: 'Uzum, Olcha, Asaxiy, Texnomart, Mediapark, Alif Shop, Openshop, ZoodMall, Amazon, eBay, Walmart, AliExpress, Temu, Wildberries, Ozon, Trendyol, Rakuten, Coupang и ещё 15+ площадок.' }, { q: 'Это бесплатно?', a: 'Да, базовые функции полностью бесплатны. Pro-версия с расширенной аналитикой скоро появится.' }];
+      const container = document.getElementById('faqContainer'); if (!container) return;
+      container.innerHTML = faqs.map((f, i) => `<div class="faq-item" id="faq-${i}"><button class="faq-question" onclick="toggleFaq(${i})"><span>${f.q}</span><i data-lucide="chevron-down" width="18" height="18" style="transition:transform 0.3s;"></i></button><div class="faq-answer">${f.a}</div></div>`).join('');
+      lucide.createIcons();
+    }
+
+    function toggleFaq(i) { const item = document.getElementById(`faq-${i}`); const wasOpen = item.classList.contains('open'); document.querySelectorAll('.faq-item').forEach(el => el.classList.remove('open')); if (!wasOpen) item.classList.add('open'); }
+
+    function switchSearchMode(mode) { document.getElementById('tabTextSearch').classList.toggle('active', mode === 'text'); document.getElementById('tabImageSearch').classList.toggle('active', mode === 'image'); document.getElementById('textSearchPanel').style.display = mode === 'text' ? 'block' : 'none'; document.getElementById('imageSearchPanel').style.display = mode === 'image' ? 'block' : 'none'; }
+    function handleImageFile(file) { if (!file) return; const reader = new FileReader(); reader.onload = e => { showToast('AI Vision анализирует...'); setTimeout(() => { showToast('Распознан товар: AirPods Pro 2'); quickSearch('AirPods'); }, 1500); }; reader.readAsDataURL(file); }
+    function startLiveCamera() { showToast('В реальном приложении здесь откроется камера'); }
+
+    function updateMouseGlow() { document.querySelectorAll('.glass-card').forEach(card => { card.addEventListener('mousemove', e => { const rect = card.getBoundingClientRect(); card.style.setProperty('--mouse-x', `${e.clientX - rect.left}px`); card.style.setProperty('--mouse-y', `${e.clientY - rect.top}px`); }); }); }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      init(); initChat();
+      currentProducts = PRODUCTS; renderProducts(PRODUCTS.slice(0, visibleCount), 'productsGrid');
+      document.getElementById('resultsCountText').textContent = `Найдено: ${PRODUCTS.length} товаров`;
+      document.getElementById('loadMoreWrap').style.display = 'block';
+    });
+  </script>
+</body>
+</html>
